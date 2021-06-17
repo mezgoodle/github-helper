@@ -1,4 +1,5 @@
 import logging
+from api import API
 
 from aiogram import Bot, Dispatcher, executor, types
 
@@ -18,6 +19,17 @@ async def send_welcome(message: types.Message):
     This handler will be called when user sends `/start` or `/help` command
     """
     await message.reply("Hi!\nI'm EchoBot!\nPowered by _mezgoodle_.", parse_mode='Markdown')
+
+
+@dp.message_handler(commands=['token'])
+async def send_welcome(message: types.Message):
+    """
+    This handler will be called when user sends `/start` or `/help` command
+    """
+    print(message.text)
+    token = message.text.split(' ')[1]
+    info = API(token)
+    await message.reply(info.get_user_info(), parse_mode='Markdown')
 
 
 @dp.message_handler()
