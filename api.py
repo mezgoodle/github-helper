@@ -14,5 +14,10 @@ class API:
         return f'You have been authenticated with login _{user.login}_ as _{user.name}_'
 
     def get_repos(self):
-        pass
+        user = self.g.get_user()
+        repos = user.get_repos()
+        for repo in repos:
+            if not repo.archived:
+                print(repo.name, repo.html_url, repo.get_issues().totalCount)
+
 
