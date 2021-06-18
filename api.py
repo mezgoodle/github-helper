@@ -1,7 +1,7 @@
 from github import Github
 
 
-class API:
+class Api:
     def __init__(self, token):
         self.g = Github(token)
 
@@ -11,7 +11,7 @@ class API:
         :return: string with information
         """
         user = self.g.get_user()
-        return f'You have been authenticated with login _{user.login}_ as _{user.name}_'
+        return f'You have been authenticated with login *{user.login}* as *{user.name}*'
 
     def get_repos(self):
         user = self.g.get_user()
