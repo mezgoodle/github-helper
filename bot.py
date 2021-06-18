@@ -1,7 +1,10 @@
 import logging
-from api import API
+from api import Api
+from database import Client
+from hashing import Hasher
 
 from aiogram import Bot, Dispatcher, executor, types
+from github.GithubException import BadCredentialsException
 
 API_TOKEN = 'Token here'
 
@@ -26,10 +29,24 @@ async def send_welcome(message: types.Message):
     """
     This handler will be called when user sends `/start` or `/help` command
     """
-    print(message.text)
     token = message.text.split(' ')[1]
-    info = API(token)
-    await message.reply(info.get_user_info(), parse_mode='Markdown')
+    info = Api(token)
+    hasher = Hasher()
+    user_id = message.from_user.id
+    try:
+        info.get_user_info()
+    except BadCredentialsException:
+        return await message.reply('*Bad* credentials', parse_mode='Markdown')
+    db = Client('password')
+    data = db.get({'telegram_id': user_id})
+    encrypted_token = hasher.encrypt_message(token)
+    if data:
+        db.update({'telegram_id': user_id}, {'token': encrypted_token})
+        await message.reply('Your token has been _updated_', parse_mode='Markdown')
+    else:
+        db.insert({'token': encrypted_token, 'telegram_id': user_id})
+        await message.reply('Your token has been _set_', parse_mode='Markdown')
+    await message.answer(info.get_user_info(), parse_mode='Markdown')
 
 
 @dp.message_handler()
