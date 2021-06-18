@@ -27,6 +27,6 @@ class Hasher:
         return decrypted_message
 
 
-hasher = Hasher()
-print(hasher.encrypt_message('hello'))
-print(hasher.decrypt_message(hasher.encrypt_message('hello')))
+# hasher = Hasher()
+# print(hasher.encrypt_message('hello'))
+# print(hasher.decrypt_message(hasher.encrypt_message('hello')))

@@ -22,7 +22,7 @@ class Client:
 
     def update(self, query: dict, data: dict) -> results.UpdateResult:
         try:
-            return self.collection.update_one(query, data)
+            return self.collection.update_one(query, {'$set': data})
         except Exception as e:
             print('Error:', e)
 
