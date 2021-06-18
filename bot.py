@@ -25,7 +25,7 @@ async def send_welcome(message: types.Message):
 
 
 @dp.message_handler(commands=['token'])
-async def send_welcome(message: types.Message):
+async def get_token(message: types.Message):
     """
     This handler will be called when user sends `/start` or `/help` command
     """
