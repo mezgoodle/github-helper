@@ -58,6 +58,7 @@ async def get_me(message: types.Message):
     This handler will be called when user sends `/start` or `/help` command
     """
     user_id = message.from_user.id
+    db = Client('password')
     data = db.get({'telegram_id': user_id})
     hasher = Hasher()
     if data:
@@ -65,6 +66,24 @@ async def get_me(message: types.Message):
         decrypted_token = hasher.decrypt_message(encrypted_token)
         info = Api(decrypted_token)
         return await message.answer(info.get_user_info(), parse_mode='Markdown')
+    else:
+        return await message.answer('Your token isn\'t in database. Type the command /token')
+
+
+@dp.message_handler(commands=['repos'])
+async def get_me(message: types.Message):
+    """
+    This handler will be called when user sends `/start` or `/help` command
+    """
+    user_id = message.from_user.id
+    db = Client('password')
+    data = db.get({'telegram_id': user_id})
+    hasher = Hasher()
+    if data:
+        encrypted_token = data.get('token')
+        decrypted_token = hasher.decrypt_message(encrypted_token)
+        info = Api(decrypted_token)
+        return await message.answer(info.get_repos(), parse_mode='Markdown')
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
