@@ -16,6 +16,8 @@ class Api:
     def get_repos(self):
         user = self.g.get_user()
         repos = user.get_repos()
+        result = ''
         for repo in repos:
             if not repo.archived:
-                print(repo.name, repo.html_url, repo.get_issues().totalCount)
+                result += f'- {repo.name}. [Link]({repo.html_url}). Total issues and prs: {repo.get_issues().totalCount}\n '
+        return result
