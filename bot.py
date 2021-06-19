@@ -90,7 +90,9 @@ async def get_me(message: types.Message):
 
 @dp.message_handler()
 async def echo(message: types.Message):
-    await message.answer(message.text)
+    inline_btn_1 = types.InlineKeyboardButton('Первая кнопка!', callback_data='button1')
+    inline_kb1 = types.InlineKeyboardMarkup().add(inline_btn_1)
+    await message.answer(message.text, reply_markup=inline_kb1)
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
