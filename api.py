@@ -19,5 +19,3 @@ class Api:
         for repo in repos:
             if not repo.archived:
                 print(repo.name, repo.html_url, repo.get_issues().totalCount)
-
-
