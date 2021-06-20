@@ -21,3 +21,8 @@ class Api:
             if not repo.archived:
                 result += f'- {repo.name}. [Link]({repo.html_url}). Total issues and prs: {repo.get_issues().totalCount}\n '
         return result
+
+    def get_repo(self, repo_name: str):
+        user = self.g.get_user()
+        repo = user.get_repo(repo_name)
+        return repo
