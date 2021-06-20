@@ -92,6 +92,14 @@ async def get_me(message: types.Message):
 async def echo(message: types.Message):
     inline_btn_1 = types.InlineKeyboardButton('Первая кнопка!', callback_data='button1')
     inline_kb1 = types.InlineKeyboardMarkup().add(inline_btn_1)
+    user_id = message.from_user.id
+    db = Client('password')
+    hasher = Hasher()
+    data = db.get({'telegram_id': user_id})
+    encrypted_token = data.get('token')
+    decrypted_token = hasher.decrypt_message(encrypted_token)
+    info = Api(decrypted_token)
+    print(info.get_repo('auto-formatter'))
     await message.answer(message.text, reply_markup=inline_kb1)
 
 if __name__ == '__main__':
