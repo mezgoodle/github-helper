@@ -1,5 +1,6 @@
 from github import Github
 from github.GithubException import UnknownObjectException
+from github.PaginatedList import PaginatedList
 
 
 class Api:
@@ -14,7 +15,7 @@ class Api:
         """
         return f'You have been authenticated with login *{self.user.login}* as *{self.user.name}*'
 
-    def get_repos(self) -> str:
+    def get_repos(self) -> PaginatedList:
         repos = self.user.get_repos()
         return repos
 
