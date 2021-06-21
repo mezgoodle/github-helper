@@ -91,7 +91,6 @@ async def get_me(message: types.Message):
 @dp.message_handler()
 async def echo(message: types.Message):
     inline_btn_1 = types.InlineKeyboardButton('Первая кнопка!', callback_data='button1')
-    inline_kb1 = types.InlineKeyboardMarkup().add(inline_btn_1)
     user_id = message.from_user.id
     db = Client('password')
     hasher = Hasher()
@@ -99,8 +98,20 @@ async def echo(message: types.Message):
     encrypted_token = data.get('token')
     decrypted_token = hasher.decrypt_message(encrypted_token)
     info = Api(decrypted_token)
-    print(info.get_repo('auto-formatter'))
-    await message.answer(message.text, reply_markup=inline_kb1)
+    data = info.get_repo(message.text)
+    if data:
+        inline_keyboard = types.InlineKeyboardMarkup()
+        for issue in data['issues']:
+            if not issue.pull_request:
+                button = types.InlineKeyboardButton(f'Issue #{issue.number} - {issue.title}', url=issue.html_url)
+            else:
+                button = types.InlineKeyboardButton(f'Pull request #{issue.number} - {issue.title}', url=issue.html_url)
+            inline_keyboard.add(button)
+        final_text = f"Name: *{data['name']}*\nLink: [click here]({data['url']})\n" \
+                     f"Stars: *{data['stars']}*\nTotal issues and prs: *{data['count_of_issues']}*"
+        await message.answer(final_text, reply_markup=inline_keyboard, parse_mode='Markdown')
+    else:
+        await message.answer('Couldn\'t find your repository')
 
 if __name__ == '__main__':
     executor.start_polling(dp, skip_updates=True)
