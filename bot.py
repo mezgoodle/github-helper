@@ -71,7 +71,7 @@ async def get_me(message: types.Message):
 
 
 @dp.message_handler(commands=['repos'])
-async def get_me(message: types.Message):
+async def get_repos(message: types.Message):
     """
     This handler will be called when user sends `/start` or `/help` command
     """
@@ -88,9 +88,26 @@ async def get_me(message: types.Message):
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
 
+@dp.message_handler(commands=['issues'])
+async def get_issues(message: types.Message):
+    """
+    This handler will be called when user sends `/start` or `/help` command
+    """
+    user_id = message.from_user.id
+    db = Client('zxcVBN0911<>')
+    data = db.get({'telegram_id': user_id})
+    hasher = Hasher()
+    if data:
+        encrypted_token = data.get('token')
+        decrypted_token = hasher.decrypt_message(encrypted_token)
+        info = Api(decrypted_token)
+        return await message.answer(info.get_issues(), parse_mode='Markdown')
+    else:
+        return await message.answer('Your token isn\'t in database. Type the command /token')
+
+
 @dp.message_handler()
 async def echo(message: types.Message):
-    inline_btn_1 = types.InlineKeyboardButton('Первая кнопка!', callback_data='button1')
     user_id = message.from_user.id
     db = Client('password')
     hasher = Hasher()
