@@ -16,14 +16,7 @@ class Api:
 
     def get_repos(self) -> str:
         repos = self.user.get_repos()
-        result = ''
-        index = 1
-        for repo in repos:
-            if not repo.archived:
-                result += f'{index}. {repo.name}. [Link]({repo.html_url}). ' \
-                          f'Total issues and prs: {repo.get_issues().totalCount}\n'
-                index += 1
-        return result
+        return repos
 
     def get_repo(self, repo_name: str) -> dict:
         try:

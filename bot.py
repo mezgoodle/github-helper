@@ -83,7 +83,15 @@ async def get_repos(message: types.Message):
         encrypted_token = data.get('token')
         decrypted_token = hasher.decrypt_message(encrypted_token)
         info = Api(decrypted_token)
-        return await message.answer(info.get_repos(), parse_mode='Markdown')
+        repos = info.get_repos()
+        text = ''
+        index = 1
+        for repo in repos:
+            if not repo.archived:
+                text += f'{index}. {repo.name}. [Link]({repo.html_url}). ' \
+                          f'Total issues and prs: {repo.get_issues().totalCount}\n'
+                index += 1
+        return await message.answer(text, parse_mode='Markdown')
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
