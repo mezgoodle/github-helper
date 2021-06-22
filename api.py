@@ -36,8 +36,19 @@ class Api:
         issues = self.user.get_issues()
         result = ''
         for issue in issues:
+            issue.lock()
             if not issue.pull_request:
                 result += f'- _{issue.title}_ [#{issue.number}]({issue.html_url}). ' \
                           f'[Link to repository]({issue.repository.html_url}). Created: _{issue.created_at}_. ' \
                           f'Author: _{issue.user.name}_\n'
+        return result
+
+    def get_prs(self) -> str:
+        issues = self.user.get_issues()
+        result = ''
+        for pr in issues:
+            if pr.pull_request:
+                result += f'- _{pr.title}_ [#{pr.number}]({pr.html_url}). ' \
+                          f'[Link to repository]({pr.repository.html_url}). Created: _{pr.created_at}_. ' \
+                          f'Author: _{pr.user.name}_\n'
         return result
