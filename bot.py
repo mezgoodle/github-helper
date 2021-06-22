@@ -140,7 +140,7 @@ async def get_issues(message: types.Message):
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
         info = Api(decrypted_token)
-        return await message.answer(info.get_issues(), parse_mode='Markdown')
+        return await message.answer(info.get_issues_or_prs(True), parse_mode='Markdown')
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
@@ -154,7 +154,7 @@ async def get_issues(message: types.Message):
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
         info = Api(decrypted_token)
-        return await message.answer(info.get_prs(), parse_mode='Markdown')
+        return await message.answer(info.get_issues_or_prs(False), parse_mode='Markdown')
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
