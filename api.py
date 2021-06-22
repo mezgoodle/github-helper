@@ -36,7 +36,6 @@ class Api:
         issues = self.user.get_issues()
         result = ''
         for issue in issues:
-            issue.lock()
             if not issue.pull_request:
                 result += f'- _{issue.title}_ [#{issue.number}]({issue.html_url}). ' \
                           f'[Link to repository]({issue.repository.html_url}). Created: _{issue.created_at}_. ' \
