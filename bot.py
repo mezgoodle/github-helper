@@ -145,6 +145,20 @@ async def get_issues(message: types.Message):
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
 
+@dp.message_handler(commands=['prs'])
+async def get_issues(message: types.Message):
+    """
+    This handler will be called when user sends `/start` or `/help` command
+    """
+    user_id = message.from_user.id
+    decrypted_token = await decrypt_token(user_id)
+    if decrypted_token:
+        info = Api(decrypted_token)
+        return await message.answer(info.get_prs(), parse_mode='Markdown')
+    else:
+        return await message.answer('Your token isn\'t in database. Type the command /token')
+
+
 @dp.message_handler()
 async def echo(message: types.Message):
     user_id = message.from_user.id
