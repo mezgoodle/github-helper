@@ -32,22 +32,12 @@ class Api:
         except UnknownObjectException:
             return {}
 
-    def get_issues(self) -> str:
-        issues = self.user.get_issues()
+    def get_issues_or_prs(self, option: bool) -> str:
+        items = self.user.get_issues()
         result = ''
-        for issue in issues:
-            if not issue.pull_request:
-                result += f'- _{issue.title}_ [#{issue.number}]({issue.html_url}). ' \
-                          f'[Link to repository]({issue.repository.html_url}). Created: _{issue.created_at}_. ' \
-                          f'Author: _{issue.user.name}_\n'
-        return result
-
-    def get_prs(self) -> str:
-        issues = self.user.get_issues()
-        result = ''
-        for pr in issues:
-            if pr.pull_request:
-                result += f'- _{pr.title}_ [#{pr.number}]({pr.html_url}). ' \
-                          f'[Link to repository]({pr.repository.html_url}). Created: _{pr.created_at}_. ' \
-                          f'Author: _{pr.user.name}_\n'
+        for item in items:
+            if (item.pull_request is None) == option:
+                result += f'- _{item.title}_ [#{item.number}]({item.html_url}). ' \
+                          f'[Link to repository]({item.repository.html_url}). Created: _{item.created_at}_. ' \
+                          f'Author: _{item.user.name}_\n'
         return result
