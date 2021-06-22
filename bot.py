@@ -145,7 +145,20 @@ async def get_issues(message: types.Message):
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
         info = Api(decrypted_token)
-        return await message.answer(info.get_issues_or_prs(True), parse_mode='Markdown')
+        issues = info.get_issues_or_prs(True)
+        text = ''
+        index = 1
+        buttons = []
+        inline_keyboard = types.InlineKeyboardMarkup(row_width=4)
+        for issue in issues:
+            text += f'*{index}* _{issue.title}_ [#{issue.number}]({issue.html_url}). ' \
+                      f'[Link to repository]({issue.repository.html_url}). Created: _{issue.created_at}_. ' \
+                      f'Author: _{issue.user.name}_\n'
+            button = types.InlineKeyboardButton(f'Close {index}', callback_data=issue.title)
+            buttons.append(button)
+            index += 1
+        inline_keyboard.add(*buttons)
+        return await message.answer(text, parse_mode='Markdown', reply_markup=inline_keyboard)
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
@@ -159,7 +172,22 @@ async def get_prs(message: types.Message):
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
         info = Api(decrypted_token)
-        return await message.answer(info.get_issues_or_prs(False), parse_mode='Markdown')
+        prs = info.get_issues_or_prs(False)
+        text = ''
+        index = 1
+        buttons = []
+        inline_keyboard = types.InlineKeyboardMarkup(row_width=4)
+        for pr in prs:
+            text += f'*{index}* _{pr.title}_ [#{pr.number}]({pr.html_url}). ' \
+                    f'[Link to repository]({pr.repository.html_url}). Created: _{pr.created_at}_. ' \
+                    f'Author: _{pr.user.name}_\n'
+            button = types.InlineKeyboardButton(f'Close {index}', callback_data=pr.title)
+            buttons.append(button)
+            button = types.InlineKeyboardButton(f'Merge {index}', callback_data=pr.title)
+            buttons.append(button)
+            index += 1
+        inline_keyboard.add(*buttons)
+        return await message.answer(text, parse_mode='Markdown', reply_markup=inline_keyboard)
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
