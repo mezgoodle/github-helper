@@ -38,7 +38,4 @@ class Api:
         for item in items:
             if (item.pull_request is None) == option:
                 result.append(item)
-                # result += f'- _{item.title}_ [#{item.number}]({item.html_url}). ' \
-                #           f'[Link to repository]({item.repository.html_url}). Created: _{item.created_at}_. ' \
-                #           f'Author: _{item.user.name}_\n'
         return result
