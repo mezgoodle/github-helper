@@ -121,7 +121,7 @@ async def get_repos(message: types.Message):
             if not repo.archived:
                 text += f'{index}. {repo.name}. [Link]({repo.html_url}). ' \
                           f'Total issues and prs: {repo.get_issues().totalCount}\n'
-                button = types.InlineKeyboardButton(index, callback_data=repo.name)
+                button = types.InlineKeyboardButton(str(index), callback_data=repo.name)
                 buttons.append(button)
                 index += 1
         inline_keyboard.add(*buttons)
@@ -146,7 +146,7 @@ async def get_issues(message: types.Message):
 
 
 @dp.message_handler(commands=['prs'])
-async def get_issues(message: types.Message):
+async def get_prs(message: types.Message):
     """
     This handler will be called when user sends `/start` or `/help` command
     """
