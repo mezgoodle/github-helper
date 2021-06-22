@@ -28,6 +28,20 @@ async def decrypt_token(user_id: int) -> str:
         return ''
 
 
+async def get_full_repo(data):
+    inline_keyboard = types.InlineKeyboardMarkup()
+    for issue in data['issues']:
+        if not issue.pull_request:
+            button = types.InlineKeyboardButton(f'Issue #{issue.number} - {issue.title}', url=issue.html_url)
+        else:
+            button = types.InlineKeyboardButton(f'Pull request #{issue.number} - {issue.title}',
+                                                url=issue.html_url)
+        inline_keyboard.add(button)
+    final_text = f"Name: *{data['name']}*\nLink: [click here]({data['url']})\n" \
+                 f"Stars: *{data['stars']}*\nTotal issues and prs: *{data['count_of_issues']}*"
+    return final_text, inline_keyboard
+
+
 @dp.callback_query_handler(lambda c: c.data)
 async def process_callback(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
@@ -36,16 +50,7 @@ async def process_callback(callback_query: types.CallbackQuery):
     if decrypted_token:
         info = Api(decrypted_token)
         data = info.get_repo(callback_query.data)
-        inline_keyboard = types.InlineKeyboardMarkup()
-        for issue in data['issues']:
-            if not issue.pull_request:
-                button = types.InlineKeyboardButton(f'Issue #{issue.number} - {issue.title}', url=issue.html_url)
-            else:
-                button = types.InlineKeyboardButton(f'Pull request #{issue.number} - {issue.title}',
-                                                    url=issue.html_url)
-            inline_keyboard.add(button)
-        final_text = f"Name: *{data['name']}*\nLink: [click here]({data['url']})\n" \
-                     f"Stars: *{data['stars']}*\nTotal issues and prs: *{data['count_of_issues']}*"
+        final_text, inline_keyboard = await get_full_repo(data)
         await bot.send_message(callback_query.from_user.id, final_text, reply_markup=inline_keyboard,
                                parse_mode='Markdown')
     else:
@@ -120,7 +125,7 @@ async def get_repos(message: types.Message):
         for repo in repos:
             if not repo.archived:
                 text += f'{index}. {repo.name}. [Link]({repo.html_url}). ' \
-                          f'Total issues and prs: {repo.get_issues().totalCount}\n'
+                        f'Total issues and prs: {repo.get_issues().totalCount}\n'
                 button = types.InlineKeyboardButton(str(index), callback_data=repo.name)
                 buttons.append(button)
                 index += 1
@@ -167,15 +172,7 @@ async def echo(message: types.Message):
         info = Api(decrypted_token)
         data = info.get_repo(message.text)
         if data:
-            inline_keyboard = types.InlineKeyboardMarkup()
-            for issue in data['issues']:
-                if not issue.pull_request:
-                    button = types.InlineKeyboardButton(f'Issue #{issue.number} - {issue.title}', url=issue.html_url)
-                else:
-                    button = types.InlineKeyboardButton(f'Pull request #{issue.number} - {issue.title}', url=issue.html_url)
-                inline_keyboard.add(button)
-            final_text = f"Name: *{data['name']}*\nLink: [click here]({data['url']})\n" \
-                         f"Stars: *{data['stars']}*\nTotal issues and prs: *{data['count_of_issues']}*"
+            final_text, inline_keyboard = await get_full_repo(data)
             await message.answer(final_text, reply_markup=inline_keyboard, parse_mode='Markdown')
         else:
             await message.answer('Couldn\'t find your repository')
