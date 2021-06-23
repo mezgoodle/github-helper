@@ -148,7 +148,8 @@ async def get_repos(message: types.Message):
         for repo in repos:
             if not repo.archived:
                 text += f'{index}. {repo.name}. [Link]({repo.html_url}). ' \
-                        f'Total issues and prs: {repo.get_issues().totalCount}\n'
+                        f'Total issues and prs: {repo.get_issues().totalCount}\n' \
+                        f'Type: _{"Private" if repo.private else "Public"}_\n'
                 button = types.InlineKeyboardButton(str(index), callback_data=repo.name)
                 buttons.append(button)
                 index += 1
