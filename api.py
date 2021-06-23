@@ -33,9 +33,22 @@ class Api:
             return {}
 
     def get_issues_or_prs(self, option: bool) -> list:
+        # TODO: get user authored issues and prs
         items = self.user.get_issues()
         result = []
         for item in items:
             if (item.pull_request is None) == option:
                 result.append(item)
         return result
+
+    def close_issues_or_prs(self, url) -> None:
+        items = self.user.get_issues()
+        for item in items:
+            if item.url == url:
+                item.edit(state='closed')
+
+    def merge_prs(self, url) -> None:
+        items = self.user.get_issues()
+        for item in items:
+            if item.url == url:
+                item.edit(state='closed')
