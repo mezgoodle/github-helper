@@ -78,7 +78,7 @@ async def process_callback(callback_query: types.CallbackQuery):
         if callback_query.data.startswith(CLOSE):
             info.close_issues_or_prs(callback_query.data[len(CLOSE):])
         elif callback_query.data.startswith(MERGE):
-            print(callback_query.data[len(MERGE):])
+            info.merge_prs(callback_query.data[len(MERGE):])
         else:
             data = info.get_repo(callback_query.data)
             final_text, inline_keyboard = await get_full_repo(data)
@@ -182,6 +182,7 @@ async def get_issues(message: types.Message):
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
 
+# TODO: show passing workflows
 @dp.message_handler(commands=['prs'])
 async def get_prs(message: types.Message):
     """
