@@ -8,6 +8,9 @@ from aiogram import Bot, Dispatcher, executor, types
 from github.GithubException import BadCredentialsException
 
 API_TOKEN = os.getenv('TELEGRAM_TOKEN', 'token')
+# CONSTANTS
+CLOSE = 'c'
+MERGE = 'm'
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -54,10 +57,10 @@ async def prepare_issues_or_prs(token: str, option: bool):
         final_text += f'*{index}* _{item.title}_ [#{item.number}]({item.html_url}). ' \
                 f'[Link to repository]({item.repository.html_url}). Created: _{item.created_at}_. ' \
                 f'Author: _{item.user.name}_\n'
-        button = types.InlineKeyboardButton(f'Close {index}', callback_data=item.title)
+        button = types.InlineKeyboardButton(f'Close {index}', callback_data=f'c{item.url}')
         buttons.append(button)
         if not option:
-            button = types.InlineKeyboardButton(f'Merge {index}', callback_data=item.title)
+            button = types.InlineKeyboardButton(f'Merge {index}', callback_data=f'm{item.url}')
             buttons.append(button)
         index += 1
     inline_keyboard.add(*buttons)
@@ -71,10 +74,16 @@ async def process_callback(callback_query: types.CallbackQuery):
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
         info = Api(decrypted_token)
-        data = info.get_repo(callback_query.data)
-        final_text, inline_keyboard = await get_full_repo(data)
-        await bot.send_message(callback_query.from_user.id, final_text, reply_markup=inline_keyboard,
-                               parse_mode='Markdown')
+        # TODO: make alerts about closing and merging
+        if callback_query.data.startswith(CLOSE):
+            info.close_issues_or_prs(callback_query.data[len(CLOSE):])
+        elif callback_query.data.startswith(MERGE):
+            print(callback_query.data[len(MERGE):])
+        else:
+            data = info.get_repo(callback_query.data)
+            final_text, inline_keyboard = await get_full_repo(data)
+            await bot.send_message(callback_query.from_user.id, final_text, reply_markup=inline_keyboard,
+                                   parse_mode='Markdown')
     else:
         return await bot.send_message(callback_query.from_user.id,
                                       'Your token isn\'t in database. Type the command /token')
@@ -130,7 +139,6 @@ async def get_me(message: types.Message):
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
 
-# TODO: Show private or public
 @dp.message_handler(commands=['repos'])
 async def get_repos(message: types.Message):
     """
