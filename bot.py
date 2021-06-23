@@ -42,6 +42,27 @@ async def get_full_repo(data):
     return final_text, inline_keyboard
 
 
+async def prepare_issues_or_prs(token: str, option: bool):
+    info = Api(token)
+    items = info.get_issues_or_prs(option)
+    final_text = ''
+    index = 1
+    buttons = []
+    inline_keyboard = types.InlineKeyboardMarkup(row_width=4)
+    for item in items:
+        final_text += f'*{index}* _{item.title}_ [#{item.number}]({item.html_url}). ' \
+                f'[Link to repository]({item.repository.html_url}). Created: _{item.created_at}_. ' \
+                f'Author: _{item.user.name}_\n'
+        button = types.InlineKeyboardButton(f'Close {index}', callback_data=item.title)
+        buttons.append(button)
+        if not option:
+            button = types.InlineKeyboardButton(f'Merge {index}', callback_data=item.title)
+            buttons.append(button)
+        index += 1
+    inline_keyboard.add(*buttons)
+    return final_text, inline_keyboard
+
+
 @dp.callback_query_handler(lambda c: c.data)
 async def process_callback(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
@@ -108,6 +129,7 @@ async def get_me(message: types.Message):
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
 
+# TODO: Show private or public
 @dp.message_handler(commands=['repos'])
 async def get_repos(message: types.Message):
     """
@@ -144,21 +166,8 @@ async def get_issues(message: types.Message):
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
-        info = Api(decrypted_token)
-        issues = info.get_issues_or_prs(True)
-        text = ''
-        index = 1
-        buttons = []
-        inline_keyboard = types.InlineKeyboardMarkup(row_width=4)
-        for issue in issues:
-            text += f'*{index}* _{issue.title}_ [#{issue.number}]({issue.html_url}). ' \
-                      f'[Link to repository]({issue.repository.html_url}). Created: _{issue.created_at}_. ' \
-                      f'Author: _{issue.user.name}_\n'
-            button = types.InlineKeyboardButton(f'Close {index}', callback_data=issue.title)
-            buttons.append(button)
-            index += 1
-        inline_keyboard.add(*buttons)
-        return await message.answer(text, parse_mode='Markdown', reply_markup=inline_keyboard)
+        final_text, inline_keyboard = await prepare_issues_or_prs(decrypted_token, True)
+        return await message.answer(final_text, parse_mode='Markdown', reply_markup=inline_keyboard)
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
@@ -171,23 +180,8 @@ async def get_prs(message: types.Message):
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
-        info = Api(decrypted_token)
-        prs = info.get_issues_or_prs(False)
-        text = ''
-        index = 1
-        buttons = []
-        inline_keyboard = types.InlineKeyboardMarkup(row_width=4)
-        for pr in prs:
-            text += f'*{index}* _{pr.title}_ [#{pr.number}]({pr.html_url}). ' \
-                    f'[Link to repository]({pr.repository.html_url}). Created: _{pr.created_at}_. ' \
-                    f'Author: _{pr.user.name}_\n'
-            button = types.InlineKeyboardButton(f'Close {index}', callback_data=pr.title)
-            buttons.append(button)
-            button = types.InlineKeyboardButton(f'Merge {index}', callback_data=pr.title)
-            buttons.append(button)
-            index += 1
-        inline_keyboard.add(*buttons)
-        return await message.answer(text, parse_mode='Markdown', reply_markup=inline_keyboard)
+        final_text, inline_keyboard = await prepare_issues_or_prs(decrypted_token, False)
+        return await message.answer(final_text, parse_mode='Markdown', reply_markup=inline_keyboard)
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
