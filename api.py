@@ -51,4 +51,7 @@ class Api:
         items = self.user.get_issues()
         for item in items:
             if item.url == url:
-                item.edit(state='closed')
+                repo = self.user.get_repo(item.repository.name)
+                pr_number = url.split('/')[-1]
+                pr = repo.get_pull(int(pr_number))
+                pr.merge()
