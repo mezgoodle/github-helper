@@ -1,4 +1,5 @@
 import logging
+import os
 from api import Api
 from database import Client
 from hashing import Hasher
@@ -6,7 +7,7 @@ from hashing import Hasher
 from aiogram import Bot, Dispatcher, executor, types
 from github.GithubException import BadCredentialsException
 
-API_TOKEN = 'Token here'
+API_TOKEN = os.getenv('TELEGRAM_TOKEN', 'token')
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +18,7 @@ dp = Dispatcher(bot)
 
 
 async def decrypt_token(user_id: int) -> str:
-    db = Client('password')
+    db = Client(os.getenv('MONGO_PASSWORD', 'password'))
     data = db.get({'telegram_id': user_id})
     hasher = Hasher()
     try:
@@ -103,7 +104,7 @@ async def get_token(message: types.Message):
         info.get_user_info()
     except BadCredentialsException:
         return await message.reply('*Bad* credentials', parse_mode='Markdown')
-    db = Client('password')
+    db = Client(os.getenv('MONGO_PASSWORD', 'password'))
     data = db.get({'telegram_id': user_id})
     encrypted_token = hasher.encrypt_message(token)
     if data:
