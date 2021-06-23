@@ -31,6 +31,3 @@ class Client:
             return self.collection.delete_one(query)
         except Exception as e:
             print('Error:', e)
-
-# client = Client('password')
-# print(client.update({'token': "ghp_31eqweqw"}, {'$set': {'telegram_id': 'tg_test_id'}}))
