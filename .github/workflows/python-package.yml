@@ -35,3 +35,5 @@ jobs:
     - name: Test with unittest
       run: |
         python -m unittest -v
+      env:
+        MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
