@@ -269,72 +269,61 @@ async def cancel_handler(message: types.Message, state: FSMContext):
     if current_state is None:
         return
     await state.finish()
-    # And remove keyboard (just in case)
     await message.reply('Cancelled.')
+
+
+async def handle_simple_state(message, state, state_class, key, answer_text):
+    answer = message.text
+    await state.update_data({key: answer})
+    await state_class.next()
+    return await message.answer(answer_text)
+
+
+async def handle_complex_state(message, state, state_class, answer_text, error_text, key):
+    answer = message.text
+    user_id = message.from_user.id
+    decrypted_token = await decrypt_token(user_id)
+    info = Api(decrypted_token)
+    repo = info.get_repo(answer)
+    if repo:
+        await state.update_data({key: answer})
+        await state.update_data(Repository=repo)
+        await state_class.next()
+        return await message.answer(answer_text)
+    else:
+        return await message.reply(error_text)
 
 
 @dp.message_handler(state=Issue.RepoName)
 async def answer_repo_name_issue(message: types.Message, state: FSMContext):
-    answer = message.text
-    user_id = message.from_user.id
-    decrypted_token = await decrypt_token(user_id)
-    info = Api(decrypted_token)
-    repo = info.get_repo(answer)
-    if repo:
-        await state.update_data(RepoName=answer)
-        await state.update_data(Repository=repo)
-        await Issue.next()
-        return await message.answer('Write the title of issue')
-    else:
-        return await message.reply('Enter valid name of repository')
+    await handle_complex_state(message, state, Issue, 'Write the title of issue',
+                               'Enter valid name of repository', 'RepoName')
 
 
 @dp.message_handler(state=PullRequest.RepoName)
 async def answer_repo_name_pr(message: types.Message, state: FSMContext):
-    answer = message.text
-    user_id = message.from_user.id
-    decrypted_token = await decrypt_token(user_id)
-    info = Api(decrypted_token)
-    repo = info.get_repo(answer)
-    if repo:
-        await state.update_data(RepoName=answer)
-        await state.update_data(Repository=repo)
-        await PullRequest.next()
-        return await message.answer('Write the title of pull request')
-    else:
-        return await message.reply('Enter valid name of repository')
+    await handle_complex_state(message, state, PullRequest, 'Write the title of pull request',
+                               'Enter valid name of repository', 'RepoName')
 
 
 @dp.message_handler(state=Issue.Title)
 async def answer_title_issue(message: types.Message, state: FSMContext):
-    answer = message.text
-    await state.update_data(Title=answer)
-    await Issue.next()
-    return await message.answer('Write the body of issue')
+    await handle_simple_state(message, state, Issue, 'Title', 'Write the body of issue')
 
 
 @dp.message_handler(state=PullRequest.Title)
 async def answer_title_pr(message: types.Message, state: FSMContext):
-    answer = message.text
-    await state.update_data(Title=answer)
-    await PullRequest.next()
-    return await message.answer('Write the body of pull request')
+    await handle_simple_state(message, state, PullRequest, 'Title', 'Write the body of pull request')
 
 
 @dp.message_handler(state=Issue.Body)
 async def answer_body_issue(message: types.Message, state: FSMContext):
-    answer = message.text
-    await state.update_data(Body=answer)
-    await Issue.next()
-    return await message.answer('Write the nickname of user to assign this issue')
+    await handle_simple_state(message, state, Issue, 'Body', 'Write the nickname of user to assign this issue')
 
 
 @dp.message_handler(state=PullRequest.Body)
 async def answer_body_pr(message: types.Message, state: FSMContext):
-    answer = message.text
-    await state.update_data(Body=answer)
-    await PullRequest.next()
-    return await message.answer('Write the name of the base branch')
+    await handle_simple_state(message, state, PullRequest, 'Body', 'Write the name of the base branch')
 
 
 # TODO: if empty assign
