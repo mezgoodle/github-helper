@@ -23,7 +23,7 @@ dp = Dispatcher(bot)
 async def decrypt_token(user_id: int) -> str:
     db = Client(os.getenv('MONGO_PASSWORD', 'password'))
     data = db.get({'telegram_id': user_id})
-    hasher = Hasher()
+    hasher = Hasher(os.getenv('KEY', b'Kt7ioOW4eugqDkfqcYiCz2mOuyiWRg_MTzckxEVp978='))
     try:
         encrypted_token = data.get('token')
         decrypted_token = hasher.decrypt_message(encrypted_token)
@@ -107,7 +107,7 @@ async def get_token(message: types.Message):
     except IndexError:
         return await message.reply('Enter the _token_', parse_mode='Markdown')
     info = Api(token)
-    hasher = Hasher()
+    hasher = Hasher(os.getenv('KEY', b'Kt7ioOW4eugqDkfqcYiCz2mOuyiWRg_MTzckxEVp978='))
     user_id = message.from_user.id
     try:
         info.get_user_info()
