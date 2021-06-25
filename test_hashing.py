@@ -26,3 +26,7 @@ class TestHasher(TestCase):
         self.assertIsNotNone(decrypted_message)
         self.assertIsInstance(decrypted_message, str)
         self.assertEqual(decrypted_message, self.message)
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        os.remove('secret.key')
