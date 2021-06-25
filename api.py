@@ -2,6 +2,7 @@ from github import Github
 from github.GithubException import UnknownObjectException
 from github.Issue import Issue
 from github.PaginatedList import PaginatedList
+from github.PullRequest import PullRequest
 from github.Repository import Repository
 
 
@@ -53,7 +54,7 @@ class Api:
                 pr.merge()
 
     def create_issue(self, data: dict) -> Issue:
-        repo = self.user.get_repo(data['RepoName'])
+        repo = self.get_repo(data['RepoName'])
         try:
             issue = repo.create_issue(
                 title=data['Title'],
@@ -64,5 +65,16 @@ class Api:
         except Exception:
             return None
 
-    def create_pr(self, data: dict):
-        pass
+    def create_pr(self, data: dict) -> PullRequest:
+        repo = self.get_repo(data['RepoName'])
+        try:
+            pr = repo.create_pull(
+                title=data['Title'],
+                body=data['Body'],
+                base=data['Base'],
+                head=data['Head'],
+                draft=bool(data['Draft'])
+            )
+            return pr
+        except Exception as e:
+            return None
