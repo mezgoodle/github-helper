@@ -7,8 +7,9 @@ from hashing import Hasher
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters.state import StatesGroup, State
 from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters import Text
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from github.GithubException import BadCredentialsException
+from github.GithubException import BadCredentialsException, GithubException
 
 API_TOKEN = os.getenv('TELEGRAM_TOKEN', 'token')
 # CONSTANTS
@@ -23,16 +24,17 @@ class Issue(StatesGroup):
     Title = State()
     Body = State()
     Assignee = State()
+    Repository = State()
 
 
 class PullRequest(StatesGroup):
     RepoName = State()
     Title = State()
     Body = State()
-    Assignee = State()
     Base = State()
     Head = State()
     Draft = State()
+    Repository = State()
 
 
 # Configure logging
@@ -234,45 +236,110 @@ async def create_issue(message: types.Message):
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
-        await Issue.RepoName.set()
+        await Issue.first()
         await message.reply('You started the process of creating the issue. Please, answer the questions')
         return await message.answer('What is a name of repository?')
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
 
+@dp.message_handler(commands=['create_pr'], state=None)
+async def create_pr(message: types.Message):
+    """
+    This handler will be called when user sends `/start` or `/help` command
+    """
+    user_id = message.from_user.id
+    decrypted_token = await decrypt_token(user_id)
+    if decrypted_token:
+        await PullRequest.first()
+        await message.reply('You started the process of creating the pull request. Please, answer the questions')
+        return await message.answer('What is a name of repository?')
+    else:
+        return await message.answer('Your token isn\'t in database. Type the command /token')
+
+
+# You can use state '*' if you need to handle all states
+@dp.message_handler(state='*', commands='cancel')
+@dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
+async def cancel_handler(message: types.Message, state: FSMContext):
+    """
+    Allow user to cancel any action
+    """
+    current_state = await state.get_state()
+    if current_state is None:
+        return
+    await state.finish()
+    # And remove keyboard (just in case)
+    await message.reply('Cancelled.')
+
+
 @dp.message_handler(state=Issue.RepoName)
-async def answer_repo_name(message: types.Message, state: FSMContext):
+async def answer_repo_name_issue(message: types.Message, state: FSMContext):
     answer = message.text
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
     info = Api(decrypted_token)
-    if info.get_repo(answer):
+    repo = info.get_repo(answer)
+    if repo:
         await state.update_data(RepoName=answer)
+        await state.update_data(Repository=repo)
         await Issue.next()
         return await message.answer('Write the title of issue')
     else:
         return await message.reply('Enter valid name of repository')
 
 
+@dp.message_handler(state=PullRequest.RepoName)
+async def answer_repo_name_pr(message: types.Message, state: FSMContext):
+    answer = message.text
+    user_id = message.from_user.id
+    decrypted_token = await decrypt_token(user_id)
+    info = Api(decrypted_token)
+    repo = info.get_repo(answer)
+    if repo:
+        await state.update_data(RepoName=answer)
+        await state.update_data(Repository=repo)
+        await PullRequest.next()
+        return await message.answer('Write the title of pull request')
+    else:
+        return await message.reply('Enter valid name of repository')
+
+
 @dp.message_handler(state=Issue.Title)
-async def answer_title(message: types.Message, state: FSMContext):
+async def answer_title_issue(message: types.Message, state: FSMContext):
     answer = message.text
     await state.update_data(Title=answer)
     await Issue.next()
     return await message.answer('Write the body of issue')
 
 
+@dp.message_handler(state=PullRequest.Title)
+async def answer_title_pr(message: types.Message, state: FSMContext):
+    answer = message.text
+    await state.update_data(Title=answer)
+    await PullRequest.next()
+    return await message.answer('Write the body of pull request')
+
+
 @dp.message_handler(state=Issue.Body)
-async def answer_body(message: types.Message, state: FSMContext):
+async def answer_body_issue(message: types.Message, state: FSMContext):
     answer = message.text
     await state.update_data(Body=answer)
     await Issue.next()
     return await message.answer('Write the nickname of user to assign this issue')
 
 
+@dp.message_handler(state=PullRequest.Body)
+async def answer_body_pr(message: types.Message, state: FSMContext):
+    answer = message.text
+    await state.update_data(Body=answer)
+    await PullRequest.next()
+    return await message.answer('Write the name of the base branch')
+
+
+# TODO: if empty assign
 @dp.message_handler(state=Issue.Assignee)
-async def answer_assign(message: types.Message, state: FSMContext):
+async def answer_assign_issue(message: types.Message, state: FSMContext):
     answer = message.text
     await state.update_data(Assignee=answer)
     data = await state.get_data()
@@ -283,6 +350,47 @@ async def answer_assign(message: types.Message, state: FSMContext):
     await state.finish()
     if issue:
         return await message.answer('Issue has been created')
+    else:
+        return await message.answer('Error')
+
+
+@dp.message_handler(state=PullRequest.Base)
+async def answer_base_pr(message: types.Message, state: FSMContext):
+    answer = message.text
+    state_data = await state.get_data()
+    if state_data.get('Repository').default_branch == answer:
+        await state.update_data(Base=answer)
+        await PullRequest.next()
+        return await message.answer('Write the name of the head branch')
+    else:
+        return await message.reply('The name of the base branch is incorrect')
+
+
+@dp.message_handler(state=PullRequest.Head)
+async def answer_head_pr(message: types.Message, state: FSMContext):
+    answer = message.text
+    state_data = await state.get_data()
+    try:
+        state_data.get('Repository').get_branch(answer)
+    except GithubException:
+        return await message.reply('The name of the head branch is incorrect')
+    await state.update_data(Head=answer)
+    await PullRequest.next()
+    return await message.answer('Is this pr still in draft?(Write True or False)')
+
+
+@dp.message_handler(state=PullRequest.Draft)
+async def answer_draft_pr(message: types.Message, state: FSMContext):
+    answer = message.text
+    await state.update_data(Draft=answer)
+    data = await state.get_data()
+    user_id = message.from_user.id
+    decrypted_token = await decrypt_token(user_id)
+    info = Api(decrypted_token)
+    pr = info.create_pr(data)
+    await state.finish()
+    if pr:
+        return await message.answer('Pull request has been created')
     else:
         return await message.answer('Error')
 
