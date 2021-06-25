@@ -1,6 +1,7 @@
 from github import Github
 from github.GithubException import UnknownObjectException
 from github.PaginatedList import PaginatedList
+from github.Repository import Repository
 
 
 class Api:
@@ -19,18 +20,12 @@ class Api:
         repos = self.user.get_repos()
         return repos
 
-    def get_repo(self, repo_name: str) -> dict:
+    def get_repo(self, repo_name: str) -> Repository:
         try:
             repo = self.user.get_repo(repo_name)
-            return {
-                'name': repo.name,
-                'url': repo.html_url,
-                'stars': repo.stargazers_count,
-                'count_of_issues': repo.get_issues().totalCount,
-                'issues': repo.get_issues()
-            }
+            return repo
         except UnknownObjectException:
-            return {}
+            return None
 
     def get_issues_or_prs(self, option: bool) -> list:
         # TODO: get user authored issues and prs
@@ -55,3 +50,9 @@ class Api:
                 pr_number = url.split('/')[-1]
                 pr = repo.get_pull(int(pr_number))
                 pr.merge()
+
+    def create_issue(self, data: dict):
+        pass
+
+    def create_pr(self, data: dict):
+        pass
