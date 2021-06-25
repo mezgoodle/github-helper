@@ -6,6 +6,8 @@ from hashing import Hasher
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram.dispatcher import FSMContext
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from github.GithubException import BadCredentialsException
 
 API_TOKEN = os.getenv('TELEGRAM_TOKEN', 'token')
@@ -19,6 +21,7 @@ CREATE_PR = 'p'
 class Issue(StatesGroup):
     RepoName = State()
     Title = State()
+    Body = State()
     Assignee = State()
 
 
@@ -37,7 +40,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Init bot and dispatcher
 bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher(bot, storage=MemoryStorage())
 
 
 async def decrypt_token(user_id: int) -> str:
@@ -221,6 +224,67 @@ async def get_prs(message: types.Message):
         return await message.answer(final_text, parse_mode='Markdown', reply_markup=inline_keyboard)
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
+
+
+@dp.message_handler(commands=['create_issue'], state=None)
+async def create_issue(message: types.Message):
+    """
+    This handler will be called when user sends `/start` or `/help` command
+    """
+    user_id = message.from_user.id
+    decrypted_token = await decrypt_token(user_id)
+    if decrypted_token:
+        await Issue.RepoName.set()
+        await message.reply('You started the process of creating the issue. Please, answer the questions')
+        return await message.answer('What is a name of repository?')
+    else:
+        return await message.answer('Your token isn\'t in database. Type the command /token')
+
+
+@dp.message_handler(state=Issue.RepoName)
+async def answer_repo_name(message: types.Message, state: FSMContext):
+    answer = message.text
+    user_id = message.from_user.id
+    decrypted_token = await decrypt_token(user_id)
+    info = Api(decrypted_token)
+    if info.get_repo(answer):
+        await state.update_data(RepoName=answer)
+        await Issue.next()
+        return await message.answer('Write the title of issue')
+    else:
+        return await message.reply('Enter valid name of repository')
+
+
+@dp.message_handler(state=Issue.Title)
+async def answer_title(message: types.Message, state: FSMContext):
+    answer = message.text
+    await state.update_data(Title=answer)
+    await Issue.next()
+    return await message.answer('Write the body of issue')
+
+
+@dp.message_handler(state=Issue.Body)
+async def answer_body(message: types.Message, state: FSMContext):
+    answer = message.text
+    await state.update_data(Body=answer)
+    await Issue.next()
+    return await message.answer('Write the nickname of user to assign this issue')
+
+
+@dp.message_handler(state=Issue.Assignee)
+async def answer_assign(message: types.Message, state: FSMContext):
+    answer = message.text
+    await state.update_data(Assignee=answer)
+    data = await state.get_data()
+    user_id = message.from_user.id
+    decrypted_token = await decrypt_token(user_id)
+    info = Api(decrypted_token)
+    issue = info.create_issue(data)
+    await state.finish()
+    if issue:
+        return await message.answer('Issue has been created')
+    else:
+        return await message.answer('Error')
 
 
 @dp.message_handler()
