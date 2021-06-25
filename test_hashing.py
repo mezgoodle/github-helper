@@ -1,3 +1,4 @@
+import os
 from unittest import TestCase
 
 from hashing import Hasher
@@ -5,7 +6,7 @@ from hashing import Hasher
 
 class TestHasher(TestCase):
     def setUp(self):
-        self.hasher = Hasher()
+        self.hasher = Hasher(os.getenv('KEY', b'Kt7ioOW4eugqDkfqcYiCz2mOuyiWRg_MTzckxEVp978='))
         self.message = 'Test message'
 
     def test_generate_and_load_key(self):
