@@ -1,32 +1,52 @@
-import os
-
 from cryptography.fernet import Fernet
 
 
 class Hasher:
-    def __init__(self):
-        self.f = Fernet(bytes(os.getenv('KEY', b'Kt7ioOW4eugqDkfqcYiCz2mOuyiWRg_MTzckxEVp978=')))
+    """
+    Class for hashing tokens in database
+    """
+    def __init__(self, key: str):
+        """
+        Create the hasher object with custom key
+        :param key: value for hashing
+        """
+        self.f = Fernet(bytes(key))
 
     @staticmethod
-    def generate_key(filepath='secret.key'):
+    def generate_key(filepath='secret.key') -> None:
+        """
+        Method that generates key and writes into file
+        :param filepath: path to file
+        :return: nothing to return
+        """
         key = Fernet.generate_key()
         with open(filepath, 'wb') as key_file:
             key_file.write(key)
 
     @staticmethod
-    def load_key(filepath='secret.key'):
+    def load_key(filepath='secret.key') -> bytes:
+        """
+        Method that gets pre-generated key from file
+        :param filepath: path to file
+        :return: key in bytes format
+        """
         return open(filepath, 'rb').read()
 
     def encrypt_message(self, message: str) -> bytes:
+        """
+        Method that encrypts string into hashing string
+        :param message: message to encrypt
+        :return: encrypted string
+        """
         encoded_message = message.encode('utf-8')
         encrypted_message = self.f.encrypt(encoded_message)
         return encrypted_message
 
     def decrypt_message(self, encrypted_message: bytes) -> str:
+        """
+        Method that decrypts hashing string into string
+        :param encrypted_message: hashing string
+        :return: decrypted string
+        """
         decrypted_message = self.f.decrypt(encrypted_message).decode()
         return decrypted_message
-
-
-# hasher = Hasher()
-# print(hasher.encrypt_message('hello'))
-# print(hasher.decrypt_message(hasher.encrypt_message('hello')))
