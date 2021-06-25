@@ -5,12 +5,32 @@ from database import Client
 from hashing import Hasher
 
 from aiogram import Bot, Dispatcher, executor, types
+from aiogram.dispatcher.filters.state import StatesGroup, State
 from github.GithubException import BadCredentialsException
 
 API_TOKEN = os.getenv('TELEGRAM_TOKEN', 'token')
 # CONSTANTS
 CLOSE = 'c'
 MERGE = 'm'
+CREATE_ISSUE = 'i'
+CREATE_PR = 'p'
+
+
+class Issue(StatesGroup):
+    RepoName = State()
+    Title = State()
+    Assignee = State()
+
+
+class PullRequest(StatesGroup):
+    RepoName = State()
+    Title = State()
+    Body = State()
+    Assignee = State()
+    Base = State()
+    Head = State()
+    Draft = State()
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -32,17 +52,19 @@ async def decrypt_token(user_id: int) -> str:
         return ''
 
 
-async def get_full_repo(data):
-    inline_keyboard = types.InlineKeyboardMarkup()
-    for issue in data['issues']:
+async def get_full_repo(repo):
+    inline_keyboard = types.InlineKeyboardMarkup(row_width=2)
+    inline_keyboard.add(types.InlineKeyboardButton('Create issue', callback_data=f"i{repo.name}"))
+    inline_keyboard.add(types.InlineKeyboardButton('Create pull request', callback_data=f"p{repo.name}"))
+    for issue in repo.get_issues():
         if not issue.pull_request:
             button = types.InlineKeyboardButton(f'Issue #{issue.number} - {issue.title}', url=issue.html_url)
         else:
             button = types.InlineKeyboardButton(f'Pull request #{issue.number} - {issue.title}',
                                                 url=issue.html_url)
         inline_keyboard.add(button)
-    final_text = f"Name: *{data['name']}*\nLink: [click here]({data['url']})\n" \
-                 f"Stars: *{data['stars']}*\nTotal issues and prs: *{data['count_of_issues']}*"
+    final_text = f"Name: *{repo.name}*\nLink: [click here]({repo.html_url})\n" \
+                 f"Stars: *{repo.stargazers_count}*\nTotal issues and prs: *{repo.get_issues().totalCount}*"
     return final_text, inline_keyboard
 
 
@@ -55,8 +77,8 @@ async def prepare_issues_or_prs(token: str, option: bool):
     inline_keyboard = types.InlineKeyboardMarkup(row_width=4)
     for item in items:
         final_text += f'*{index}* _{item.title}_ [#{item.number}]({item.html_url}). ' \
-                f'[Link to repository]({item.repository.html_url}). Created: _{item.created_at}_. ' \
-                f'Author: _{item.user.name}_\n'
+                      f'[Link to repository]({item.repository.html_url}). Created: _{item.created_at}_. ' \
+                      f'Author: _{item.user.name}_\n'
         button = types.InlineKeyboardButton(f'Close {index}', callback_data=f'c{item.url}')
         buttons.append(button)
         if not option:
@@ -79,6 +101,10 @@ async def process_callback(callback_query: types.CallbackQuery):
             info.close_issues_or_prs(callback_query.data[len(CLOSE):])
         elif callback_query.data.startswith(MERGE):
             info.merge_prs(callback_query.data[len(MERGE):])
+        elif callback_query.data.startswith(CREATE_ISSUE):
+            print(callback_query.data)
+        elif callback_query.data.startswith(CREATE_PR):
+            print(callback_query.data)
         else:
             data = info.get_repo(callback_query.data)
             final_text, inline_keyboard = await get_full_repo(data)
