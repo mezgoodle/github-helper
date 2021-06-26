@@ -75,6 +75,7 @@ class Api:
                 head=data['Head'],
                 draft=data['Draft']
             )
+            pr.add_to_assignees(data['Assignee'])
             return pr
         except Exception as e:
             return None
