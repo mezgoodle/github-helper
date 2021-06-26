@@ -40,7 +40,10 @@ class Hasher:
         :return: encrypted string
         """
         encoded_message = message.encode('utf-8')
-        encrypted_message = self.f.encrypt(encoded_message)
+        try:
+            encrypted_message = self.f.encrypt(encoded_message)
+        except TypeError:
+            return b''
         return encrypted_message
 
     def decrypt_message(self, encrypted_message: bytes) -> str:
@@ -49,5 +52,8 @@ class Hasher:
         :param encrypted_message: hashing string
         :return: decrypted string
         """
-        decrypted_message = self.f.decrypt(encrypted_message).decode()
+        try:
+            decrypted_message = self.f.decrypt(encrypted_message).decode()
+        except TypeError:
+            return ''
         return decrypted_message
