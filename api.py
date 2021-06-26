@@ -73,7 +73,7 @@ class Api:
                 body=data['Body'],
                 base=data['Base'],
                 head=data['Head'],
-                draft=bool(data['Draft'])
+                draft=data['Draft']
             )
             return pr
         except Exception as e:

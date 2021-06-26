@@ -371,7 +371,10 @@ async def answer_head_pr(message: types.Message, state: FSMContext):
 @dp.message_handler(state=PullRequest.Draft)
 async def answer_draft_pr(message: types.Message, state: FSMContext):
     answer = message.text
-    await state.update_data(Draft=answer)
+    if answer.strip().lower() == 'true':
+        await state.update_data(Draft=True)
+    elif answer.strip().lower() == 'false':
+        await state.update_data(Draft=False)
     data = await state.get_data()
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
