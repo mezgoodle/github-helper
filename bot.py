@@ -31,6 +31,7 @@ class PullRequest(StatesGroup):
     RepoName = State()
     Title = State()
     Body = State()
+    Assignee = State()
     Base = State()
     Head = State()
     Draft = State()
@@ -323,7 +324,12 @@ async def answer_body_issue(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=PullRequest.Body)
 async def answer_body_pr(message: types.Message, state: FSMContext):
-    await handle_simple_state(message, state, PullRequest, 'Body', 'Write the name of the base branch')
+    await handle_simple_state(message, state, PullRequest, 'Body', 'Write the nickname of user to assign this pr')
+
+
+@dp.message_handler(state=PullRequest.Assignee)
+async def answer_assign_pr(message: types.Message, state: FSMContext):
+    await handle_simple_state(message, state, PullRequest, 'Assignee', 'Write the name of the base branch')
 
 
 # TODO: if empty assign
