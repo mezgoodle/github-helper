@@ -1,5 +1,11 @@
+# TODO: look for api elements and add logic to the bot
+# TODO: add return statements to the functions
 import logging
 import os
+from typing import Tuple
+
+from github.Repository import Repository
+
 from api import Api
 from database import Client
 from hashing import Hasher
@@ -48,6 +54,11 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 
 async def decrypt_token(user_id: int) -> str:
     db = Client(os.getenv('MONGO_PASSWORD', 'password'))
+    """
+    Method for decrypting token from the database
+    :param user_id: user id in Telegram
+    :return: decrypted token
+    """
     data = db.get({'telegram_id': user_id})
     hasher = Hasher(os.getenv('KEY', b'Kt7ioOW4eugqDkfqcYiCz2mOuyiWRg_MTzckxEVp978='))
     try:
@@ -58,10 +69,15 @@ async def decrypt_token(user_id: int) -> str:
         return ''
 
 
-async def get_full_repo(repo):
+async def get_full_repo(repo: Repository) -> Tuple[str, types.InlineKeyboardMarkup]:
+    """
+    Function for returning pretty information about repository
+    :param repo: object with data about Repository
+    :return: text and keyboard with buttons
+    """
     inline_keyboard = types.InlineKeyboardMarkup(row_width=2)
-    inline_keyboard.add(types.InlineKeyboardButton('Create issue', callback_data=f"i{repo.name}"))
-    inline_keyboard.add(types.InlineKeyboardButton('Create pull request', callback_data=f"p{repo.name}"))
+    inline_keyboard.add(types.InlineKeyboardButton('Create issue', callback_data=f'i{repo.name}'))
+    inline_keyboard.add(types.InlineKeyboardButton('Create pull request', callback_data=f'p{repo.name}'))
     for issue in repo.get_issues():
         if not issue.pull_request:
             button = types.InlineKeyboardButton(f'Issue #{issue.number} - {issue.title}', url=issue.html_url)
@@ -69,12 +85,18 @@ async def get_full_repo(repo):
             button = types.InlineKeyboardButton(f'Pull request #{issue.number} - {issue.title}',
                                                 url=issue.html_url)
         inline_keyboard.add(button)
-    final_text = f"Name: *{repo.name}*\nLink: [click here]({repo.html_url})\n" \
-                 f"Stars: *{repo.stargazers_count}*\nTotal issues and prs: *{repo.get_issues().totalCount}*"
+    final_text = f'Name: *{repo.name}*\nLink: [click here]({repo.html_url})\n' \
+                 f'Stars: *{repo.stargazers_count}*\nTotal issues and prs: *{repo.get_issues().totalCount}*'
     return final_text, inline_keyboard
 
 
-async def prepare_issues_or_prs(token: str, option: bool):
+async def prepare_issues_or_prs(token: str, option: bool) -> Tuple[str, types.InlineKeyboardMarkup]:
+    """
+    Function for returning pretty information about issues or pull requests
+    :param token: decrypted GitHub token
+    :param option: issue or pull request
+    :return: text and keyboard with buttons
+    """
     info = Api(token)
     items = info.get_issues_or_prs(option)
     final_text = ''
@@ -97,6 +119,9 @@ async def prepare_issues_or_prs(token: str, option: bool):
 
 @dp.callback_query_handler(lambda c: c.data)
 async def process_callback(callback_query: types.CallbackQuery):
+    """
+    This handler will be called when user sends `/start` or `/help` command
+    """
     await bot.answer_callback_query(callback_query.id)
     user_id = callback_query.from_user.id
     decrypted_token = await decrypt_token(user_id)
@@ -107,6 +132,7 @@ async def process_callback(callback_query: types.CallbackQuery):
             info.close_issues_or_prs(callback_query.data[len(CLOSE):])
         elif callback_query.data.startswith(MERGE):
             info.merge_prs(callback_query.data[len(MERGE):])
+        # TODO: write logic
         elif callback_query.data.startswith(CREATE_ISSUE):
             print(callback_query.data)
         elif callback_query.data.startswith(CREATE_PR):
@@ -121,6 +147,7 @@ async def process_callback(callback_query: types.CallbackQuery):
                                       'Your token isn\'t in database. Type the command /token')
 
 
+# TODO: write separate handler for /help
 @dp.message_handler(commands=['start', 'help'])
 async def send_welcome(message: types.Message):
     """
