@@ -37,3 +37,4 @@ jobs:
         python -m unittest -v
       env:
         MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
+        GB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
