@@ -130,33 +130,34 @@ async def process_callback(callback_query: types.CallbackQuery):
         info = Api(decrypted_token)
         if callback_query.data.startswith(CLOSE):
             if info.close_issues_or_prs(callback_query.data[len(CLOSE):]):
-                await bot.answer_callback_query(callback_query.id, 'Issue has been closed')
+                return await bot.answer_callback_query(callback_query.id, 'Issue has been closed')
             else:
-                await bot.answer_callback_query(callback_query.id, 'Error while closing')
+                return await bot.answer_callback_query(callback_query.id, 'Error while closing')
         elif callback_query.data.startswith(MERGE):
             if info.merge_prs(callback_query.data[len(MERGE):]):
-                await bot.answer_callback_query(callback_query.id, 'Pull request has been merged')
+                return await bot.answer_callback_query(callback_query.id, 'Pull request has been merged')
             else:
-                await bot.answer_callback_query(callback_query.id, 'Error while merging')
+                return await bot.answer_callback_query(callback_query.id, 'Error while merging')
         elif callback_query.data.startswith(CREATE_ISSUE):
             await Issue.first()
             await bot.send_message(callback_query.from_user.id, 'So, the name of repository is:')
             message = await bot.send_message(callback_query.from_user.id, callback_query.data[1:])
             message.from_user.id = callback_query.from_user.id
-            await handle_complex_state(message, dp.current_state(), Issue, 'Write the title of issue',
-                                       'Enter valid name of repository', 'RepoName')
+            return await handle_complex_state(message, dp.current_state(), Issue, 'Write the title of issue',
+                                              'Enter valid name of repository', 'RepoName')
         elif callback_query.data.startswith(CREATE_PR):
             await PullRequest.first()
             await bot.send_message(callback_query.from_user.id, 'So, the name of repository is:')
             message = await bot.send_message(callback_query.from_user.id, callback_query.data[1:])
             message.from_user.id = callback_query.from_user.id
-            await handle_complex_state(message, dp.current_state(), PullRequest, 'Write the title of pull request',
-                                       'Enter valid name of repository', 'RepoName')
+            return await handle_complex_state(message, dp.current_state(), PullRequest,
+                                              'Write the title of pull request',
+                                              'Enter valid name of repository', 'RepoName')
         else:
             data = info.get_repo(callback_query.data)
             final_text, inline_keyboard = await get_full_repo(data)
-            await bot.send_message(callback_query.from_user.id, final_text, reply_markup=inline_keyboard,
-                                   parse_mode='Markdown')
+            return await bot.send_message(callback_query.from_user.id, final_text, reply_markup=inline_keyboard,
+                                          parse_mode='Markdown')
     else:
         return await bot.send_message(callback_query.from_user.id,
                                       'Your token isn\'t in database. Type the command /token')
@@ -167,7 +168,7 @@ async def send_welcome(message: types.Message):
     """
     This handler will be called when user sends `/start` or `/help` command
     """
-    await message.reply("Hi!\nI'm EchoBot!\nPowered by _mezgoodle_.", parse_mode='Markdown')
+    return await message.reply("Hi!\nI'm EchoBot!\nPowered by _mezgoodle_.", parse_mode='Markdown')
 
 
 @dp.message_handler(commands=['help'])
@@ -184,7 +185,7 @@ async def send_help(message: types.Message):
            '/create_issues - start the process of creating an issue. Just answer the questions.\n' \
            '/create_pr - start the process of creating a pull request. Just answer the questions.\n' \
            'Also you can just type the name of repository and get information.'
-    await message.reply(text, parse_mode='Html')
+    return await message.reply(text, parse_mode='Html')
 
 
 @dp.message_handler(commands=['token'])
@@ -212,7 +213,7 @@ async def get_token(message: types.Message):
     else:
         db.insert({'token': encrypted_token, 'telegram_id': user_id})
         await message.reply('Your token has been _set_', parse_mode='Markdown')
-    await message.answer(info.get_user_info(), parse_mode='Markdown')
+    return await message.answer(info.get_user_info(), parse_mode='Markdown')
 
 
 @dp.message_handler(commands=['me'])
@@ -328,7 +329,7 @@ async def cancel_handler(message: types.Message, state: FSMContext):
     if current_state is None:
         return
     await state.finish()
-    await message.reply('Cancelled.')
+    return await message.reply('Cancelled.')
 
 
 async def handle_simple_state(message, state, state_class, key, answer_text):
@@ -355,19 +356,19 @@ async def handle_complex_state(message, state, state_class, answer_text, error_t
 
 @dp.message_handler(state=Issue.RepoName)
 async def answer_repo_name_issue(message: types.Message, state: FSMContext):
-    await handle_complex_state(message, state, Issue, 'Write the title of issue',
-                               'Enter valid name of repository', 'RepoName')
+    return await handle_complex_state(message, state, Issue, 'Write the title of issue',
+                                      'Enter valid name of repository', 'RepoName')
 
 
 @dp.message_handler(state=PullRequest.RepoName)
 async def answer_repo_name_pr(message: types.Message, state: FSMContext):
-    await handle_complex_state(message, state, PullRequest, 'Write the title of pull request',
-                               'Enter valid name of repository', 'RepoName')
+    return await handle_complex_state(message, state, PullRequest, 'Write the title of pull request',
+                                      'Enter valid name of repository', 'RepoName')
 
 
 @dp.message_handler(state=Issue.Title)
 async def answer_title_issue(message: types.Message, state: FSMContext):
-    await handle_simple_state(message, state, Issue, 'Title', 'Write the body of issue')
+    return await handle_simple_state(message, state, Issue, 'Title', 'Write the body of issue')
 
 
 @dp.message_handler(state=PullRequest.Title)
@@ -377,17 +378,18 @@ async def answer_title_pr(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=Issue.Body)
 async def answer_body_issue(message: types.Message, state: FSMContext):
-    await handle_simple_state(message, state, Issue, 'Body', 'Write the nickname of user to assign this issue')
+    return await handle_simple_state(message, state, Issue, 'Body', 'Write the nickname of user to assign this issue')
 
 
 @dp.message_handler(state=PullRequest.Body)
 async def answer_body_pr(message: types.Message, state: FSMContext):
-    await handle_simple_state(message, state, PullRequest, 'Body', 'Write the nickname of user to assign this pr')
+    return await handle_simple_state(message, state, PullRequest, 'Body',
+                                     'Write the nickname of user to assign this pr')
 
 
 @dp.message_handler(state=PullRequest.Assignee)
 async def answer_assign_pr(message: types.Message, state: FSMContext):
-    await handle_simple_state(message, state, PullRequest, 'Assignee', 'Write the name of the base branch')
+    return await handle_simple_state(message, state, PullRequest, 'Assignee', 'Write the name of the base branch')
 
 
 # TODO: if empty assign
@@ -460,9 +462,9 @@ async def echo(message: types.Message):
         data = info.get_repo(message.text)
         if data:
             final_text, inline_keyboard = await get_full_repo(data)
-            await message.answer(final_text, reply_markup=inline_keyboard, parse_mode='Markdown')
+            return await message.answer(final_text, reply_markup=inline_keyboard, parse_mode='Markdown')
         else:
-            await message.answer('Couldn\'t find your repository')
+            return await message.answer('Couldn\'t find your repository')
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
