@@ -102,15 +102,17 @@ async def prepare_issues_or_prs(token: str, option: bool) -> Tuple[str, types.In
     final_text = ''
     index = 1
     buttons = []
+    length_of_url = 29
     inline_keyboard = types.InlineKeyboardMarkup(row_width=4)
     for item in items:
         final_text += f'*{index}* _{item.title}_ [#{item.number}]({item.html_url}). ' \
                       f'[Link to repository]({item.repository.html_url}). Created: _{item.created_at}_. ' \
                       f'Author: _{item.user.name}_\n'
-        button = types.InlineKeyboardButton(f'Close {index}', callback_data=f'c{item.url}')
+        url = item.url[length_of_url:]
+        button = types.InlineKeyboardButton(f'Close {index}', callback_data=f'c{url}')
         buttons.append(button)
         if not option:
-            button = types.InlineKeyboardButton(f'Merge {index}', callback_data=f'm{item.url}')
+            button = types.InlineKeyboardButton(f'Merge {index}', callback_data=f'm{url}')
             buttons.append(button)
         index += 1
     inline_keyboard.add(*buttons)
