@@ -138,11 +138,20 @@ async def process_callback(callback_query: types.CallbackQuery):
                 await bot.answer_callback_query(callback_query.id, 'Pull request has been merged')
             else:
                 await bot.answer_callback_query(callback_query.id, 'Error while merging')
-        # TODO: write logic
         elif callback_query.data.startswith(CREATE_ISSUE):
-            print(callback_query.data)
+            await Issue.first()
+            await bot.send_message(callback_query.from_user.id, 'So, the name of repository is:')
+            message = await bot.send_message(callback_query.from_user.id, callback_query.data[1:])
+            message.from_user.id = callback_query.from_user.id
+            await handle_complex_state(message, dp.current_state(), Issue, 'Write the title of issue',
+                                       'Enter valid name of repository', 'RepoName')
         elif callback_query.data.startswith(CREATE_PR):
-            print(callback_query.data)
+            await PullRequest.first()
+            await bot.send_message(callback_query.from_user.id, 'So, the name of repository is:')
+            message = await bot.send_message(callback_query.from_user.id, callback_query.data[1:])
+            message.from_user.id = callback_query.from_user.id
+            await handle_complex_state(message, dp.current_state(), PullRequest, 'Write the title of pull request',
+                                       'Enter valid name of repository', 'RepoName')
         else:
             data = info.get_repo(callback_query.data)
             final_text, inline_keyboard = await get_full_repo(data)
@@ -153,13 +162,29 @@ async def process_callback(callback_query: types.CallbackQuery):
                                       'Your token isn\'t in database. Type the command /token')
 
 
-# TODO: write separate handler for /help
-@dp.message_handler(commands=['start', 'help'])
+@dp.message_handler(commands=['start'])
 async def send_welcome(message: types.Message):
     """
     This handler will be called when user sends `/start` or `/help` command
     """
     await message.reply("Hi!\nI'm EchoBot!\nPowered by _mezgoodle_.", parse_mode='Markdown')
+
+
+@dp.message_handler(commands=['help'])
+async def send_help(message: types.Message):
+    """
+    This handler will be called when user sends `/start` or `/help` command
+    """
+    text = 'Here you can see all instructions:\n' \
+           '/token - set your <i>GitHub token</i>. Example: /token your_github_token\n' \
+           '/me - get information about the user\n' \
+           '/prs - get information about user pull requests\n' \
+           '/issues - get information about user issues\n' \
+           '/repos - get information about user repositories\n' \
+           '/create_issues - start the process of creating an issue. Just answer the questions.\n' \
+           '/create_pr - start the process of creating a pull request. Just answer the questions.\n' \
+           'Also you can just type the name of repository and get information.'
+    await message.reply(text, parse_mode='Html')
 
 
 @dp.message_handler(commands=['token'])
