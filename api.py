@@ -1,4 +1,3 @@
-# TODO: Add tests
 from github import Github
 from github.GithubException import UnknownObjectException
 from github.Issue import Issue
@@ -18,12 +17,14 @@ class Api:
         """
         self.g = Github(token)
         self.user = self.g.get_user()
+        self.url = 'https://api.github.com/repos/'
 
     def get_user_info(self) -> str:
         """
         Method that returns string with information about user
         :return: string with information
         """
+        print(self.user.repos_url)
         return f'You have been authenticated with login *{self.user.login}* as *{self.user.name}*'
 
     def get_repos(self) -> PaginatedList:
@@ -52,32 +53,33 @@ class Api:
         :param option: issues - True, pull requests - False
         :return: list of items
         """
-        # TODO: get user authored issues and prs
-        items = self.user.get_issues()
+        items = self.user.get_issues(filter='all')
         result = []
         for item in items:
             if (item.pull_request is None) == option:
                 result.append(item)
         return result
 
-    def close_issues_or_prs(self, url: str) -> None:
+    def close_issues_or_prs(self, part_of_url: str) -> None:
         """
         Method for closing issues or pull requests
-        :param url: api url for closing
+        :param part_of_url: part of api url for closing
         :return: nothing to return
         """
-        items = self.user.get_issues()
+        url = self.url + part_of_url
+        items = self.user.get_issues(filter='all')
         for item in items:
             if item.url == url:
                 item.edit(state='closed')
 
-    def merge_prs(self, url: str) -> None:
+    def merge_prs(self, part_of_url: str) -> None:
         """
         Method for merging pull requests
-        :param url: api url for merging
+        :param part_of_url: part of api url for merging
         :return: nothing to return
         """
-        items = self.user.get_issues()
+        url = self.url + part_of_url
+        items = self.user.get_issues(filter='all')
         for item in items:
             if item.url == url:
                 repo = self.user.get_repo(item.repository.name)
