@@ -128,5 +128,5 @@ class Api:
             )
             pr.add_to_assignees(data['Assignee'])
             return pr
-        except Exception as e:
+        except Exception:
             return None
