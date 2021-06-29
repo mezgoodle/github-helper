@@ -1,11 +1,11 @@
-import os
 from unittest import TestCase
 
 from database import Client
+from config import DB_PASSWORD
 
 
 class Parent:
-    client = Client(os.getenv('MONGO_PASSWORD', 'password'), 'githubhelper', 'tokens')
+    client = Client(DB_PASSWORD, 'githubhelper', 'tokens')
     full_data = {'test_token': 'test_token', 'test_id': 'test_id'}
     data_with_id = {'test_id': 'test_id'}
 

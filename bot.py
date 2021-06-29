@@ -9,6 +9,7 @@ from github.Repository import Repository
 from api import Api
 from database import Client
 from hashing import Hasher
+from config import API_TOKEN, DB_PASSWORD
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters.state import StatesGroup, State
@@ -17,7 +18,6 @@ from aiogram.dispatcher.filters import Text
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from github.GithubException import BadCredentialsException, GithubException
 
-API_TOKEN = os.getenv('TELEGRAM_TOKEN', 'token')
 # CONSTANTS
 CLOSE = 'c'
 MERGE = 'm'
@@ -53,12 +53,12 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 
 
 async def decrypt_token(user_id: int) -> str:
-    db = Client(os.getenv('MONGO_PASSWORD', 'password'))
     """
     Method for decrypting token from the database
     :param user_id: user id in Telegram
     :return: decrypted token
     """
+    db = Client(DB_PASSWORD, 'githubhelper', 'tokens')
     data = db.get({'telegram_id': user_id})
     hasher = Hasher(os.getenv('KEY', b'Kt7ioOW4eugqDkfqcYiCz2mOuyiWRg_MTzckxEVp978='))
     try:
@@ -178,7 +178,7 @@ async def get_token(message: types.Message):
         info.get_user_info()
     except BadCredentialsException:
         return await message.reply('*Bad* credentials', parse_mode='Markdown')
-    db = Client(os.getenv('MONGO_PASSWORD', 'password'))
+    db = Client(DB_PASSWORD, 'githubhelper', 'tokens')
     data = db.get({'telegram_id': user_id})
     encrypted_token = hasher.encrypt_message(token)
     if data:

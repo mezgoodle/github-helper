@@ -1,16 +1,15 @@
-import os
-
 from unittest import TestCase
 
 from github.PaginatedList import PaginatedList
 from github.Repository import Repository
 
 from api import Api
+from config import GITHUB_TOKEN
 
 
 class TestApi(TestCase):
     def setUp(self) -> None:
-        self.api = Api(os.getenv('GITHUB_TOKEN', 'token'))
+        self.api = Api(GITHUB_TOKEN)
 
     def test_get_user_info(self):
         output = self.api.get_user_info()
