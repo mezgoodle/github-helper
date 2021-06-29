@@ -124,16 +124,20 @@ async def process_callback(callback_query: types.CallbackQuery):
     """
     This handler will be called when user sends `/start` or `/help` command
     """
-    await bot.answer_callback_query(callback_query.id)
     user_id = callback_query.from_user.id
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
         info = Api(decrypted_token)
-        # TODO: make alerts about closing and merging
         if callback_query.data.startswith(CLOSE):
-            info.close_issues_or_prs(callback_query.data[len(CLOSE):])
+            if info.close_issues_or_prs(callback_query.data[len(CLOSE):]):
+                await bot.answer_callback_query(callback_query.id, 'Issue has been closed')
+            else:
+                await bot.answer_callback_query(callback_query.id, 'Error while closing')
         elif callback_query.data.startswith(MERGE):
-            info.merge_prs(callback_query.data[len(MERGE):])
+            if info.merge_prs(callback_query.data[len(MERGE):]):
+                await bot.answer_callback_query(callback_query.id, 'Pull request has been merged')
+            else:
+                await bot.answer_callback_query(callback_query.id, 'Error while merging')
         # TODO: write logic
         elif callback_query.data.startswith(CREATE_ISSUE):
             print(callback_query.data)
