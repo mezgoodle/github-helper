@@ -1,5 +1,4 @@
 # TODO: look for api elements and add logic to the bot
-# TODO: add return statements to the functions
 import logging
 import os
 from typing import Tuple
