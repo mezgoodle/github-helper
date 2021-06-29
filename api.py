@@ -24,7 +24,6 @@ class Api:
         Method that returns string with information about user
         :return: string with information
         """
-        print(self.user.repos_url)
         return f'You have been authenticated with login *{self.user.login}* as *{self.user.name}*'
 
     def get_repos(self) -> PaginatedList:
@@ -60,32 +59,40 @@ class Api:
                 result.append(item)
         return result
 
-    def close_issues_or_prs(self, part_of_url: str) -> None:
+    def close_issues_or_prs(self, part_of_url: str) -> bool:
         """
         Method for closing issues or pull requests
         :param part_of_url: part of api url for closing
-        :return: nothing to return
+        :return: status of closing
         """
-        url = self.url + part_of_url
-        items = self.user.get_issues(filter='all')
-        for item in items:
-            if item.url == url:
-                item.edit(state='closed')
+        try:
+            url = self.url + part_of_url
+            items = self.user.get_issues(filter='all')
+            for item in items:
+                if item.url == url:
+                    item.edit(state='closed')
+                    return True
+        except Exception:
+            return False
 
-    def merge_prs(self, part_of_url: str) -> None:
+    def merge_prs(self, part_of_url: str) -> bool:
         """
         Method for merging pull requests
         :param part_of_url: part of api url for merging
-        :return: nothing to return
+        :return: status of merging
         """
-        url = self.url + part_of_url
-        items = self.user.get_issues(filter='all')
-        for item in items:
-            if item.url == url:
-                repo = self.user.get_repo(item.repository.name)
-                pr_number = url.split('/')[-1]
-                pr = repo.get_pull(int(pr_number))
-                pr.merge()
+        try:
+            url = self.url + part_of_url
+            items = self.user.get_issues(filter='all')
+            for item in items:
+                if item.url == url:
+                    repo = self.user.get_repo(item.repository.name)
+                    pr_number = url.split('/')[-1]
+                    pr = repo.get_pull(int(pr_number))
+                    pr.merge()
+                    return True
+        except Exception:
+            return False
 
     def create_issue(self, data: dict) -> Issue:
         """
