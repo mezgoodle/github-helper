@@ -372,22 +372,25 @@ async def answer_title_issue(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=PullRequest.Title)
 async def answer_title_pr(message: types.Message, state: FSMContext):
-    await handle_simple_state(message, state, PullRequest, 'Title', 'Write the body of pull request')
+    return await handle_simple_state(message, state, PullRequest, 'Title', 'Write the body of pull request')
 
 
 @dp.message_handler(state=Issue.Body)
 async def answer_body_issue(message: types.Message, state: FSMContext):
-    return await handle_simple_state(message, state, Issue, 'Body', 'Write the nickname of user to assign this issue')
+    return await handle_simple_state(message, state, Issue, 'Body',
+                                     'Write the nickname of user to assign this issue. If no-one - write empty')
 
 
 @dp.message_handler(state=PullRequest.Body)
 async def answer_body_pr(message: types.Message, state: FSMContext):
     return await handle_simple_state(message, state, PullRequest, 'Body',
-                                     'Write the nickname of user to assign this pr')
+                                     'Write the nickname of user to assign this pr. If no-one - write empty')
 
 
 @dp.message_handler(state=PullRequest.Assignee)
 async def answer_assign_pr(message: types.Message, state: FSMContext):
+    if message.text == 'empty':
+        message.text = ''
     return await handle_simple_state(message, state, PullRequest, 'Assignee', 'Write the name of the base branch')
 
 
@@ -395,7 +398,10 @@ async def answer_assign_pr(message: types.Message, state: FSMContext):
 @dp.message_handler(state=Issue.Assignee)
 async def answer_assign_issue(message: types.Message, state: FSMContext):
     answer = message.text
-    await state.update_data(Assignee=answer)
+    if answer == 'empty':
+        await state.update_data(Assignee='')
+    else:
+        await state.update_data(Assignee=answer)
     data = await state.get_data()
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
