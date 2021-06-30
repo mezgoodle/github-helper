@@ -66,10 +66,10 @@ class Api:
         :return: status of closing
         """
         try:
-            url = self.url + part_of_url
+            full_url = self.url + part_of_url
             items = self.user.get_issues(filter='all')
             for item in items:
-                if item.url == url:
+                if item.url == full_url:
                     item.edit(state='closed')
                     return True
         except Exception:
@@ -82,12 +82,12 @@ class Api:
         :return: status of merging
         """
         try:
-            url = self.url + part_of_url
+            full_url = self.url + part_of_url
             items = self.user.get_issues(filter='all')
             for item in items:
-                if item.url == url:
+                if item.url == full_url:
                     repo = self.user.get_repo(item.repository.name)
-                    pr_number = url.split('/')[-1]
+                    pr_number = full_url.split('/')[-1]
                     pr = repo.get_pull(int(pr_number))
                     pr.merge()
                     return True
