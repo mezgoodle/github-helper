@@ -272,7 +272,6 @@ async def get_issues(message: types.Message):
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
 
-# TODO: show passing workflows
 @dp.message_handler(commands=['prs'])
 async def get_prs(message: types.Message):
     """
