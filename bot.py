@@ -1,7 +1,7 @@
 # TODO: look for api elements and add logic to the bot
 import logging
 import os
-from typing import Tuple
+from typing import Tuple, Any, Type
 
 from github.Repository import Repository
 
@@ -17,7 +17,7 @@ from aiogram.dispatcher.filters import Text
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from github.GithubException import BadCredentialsException, GithubException
 
-# CONSTANTS
+# Constants
 CLOSE = 'c'
 MERGE = 'm'
 CREATE_ISSUE = 'i'
@@ -25,6 +25,9 @@ CREATE_PR = 'p'
 
 
 class Issue(StatesGroup):
+    """
+    State class that represents Issues
+    """
     RepoName = State()
     Title = State()
     Body = State()
@@ -33,6 +36,9 @@ class Issue(StatesGroup):
 
 
 class PullRequest(StatesGroup):
+    """
+    State class that represents Pull Requests
+    """
     RepoName = State()
     Title = State()
     Body = State()
@@ -96,8 +102,8 @@ async def prepare_issues_or_prs(token: str, option: bool) -> Tuple[str, types.In
     :param option: issue or pull request
     :return: text and keyboard with buttons
     """
-    info = Api(token)
-    items = info.get_issues_or_prs(option)
+    api_worker = Api(token)
+    items = api_worker.get_issues_or_prs(option)
     final_text = ''
     index = 1
     buttons = []
@@ -107,11 +113,11 @@ async def prepare_issues_or_prs(token: str, option: bool) -> Tuple[str, types.In
         final_text += f'*{index}* _{item.title}_ [#{item.number}]({item.html_url}). ' \
                       f'[Link to repository]({item.repository.html_url}). Created: _{item.created_at}_. ' \
                       f'Author: _{item.user.name}_\n'
-        url = item.url[length_of_url:]
-        button = types.InlineKeyboardButton(f'Close {index}', callback_data=f'c{url}')
+        short_url = item.url[length_of_url:]
+        button = types.InlineKeyboardButton(f'Close {index}', callback_data=f'c{short_url}')
         buttons.append(button)
         if not option:
-            button = types.InlineKeyboardButton(f'Merge {index}', callback_data=f'm{url}')
+            button = types.InlineKeyboardButton(f'Merge {index}', callback_data=f'm{short_url}')
             buttons.append(button)
         index += 1
     inline_keyboard.add(*buttons)
@@ -119,21 +125,21 @@ async def prepare_issues_or_prs(token: str, option: bool) -> Tuple[str, types.In
 
 
 @dp.callback_query_handler(lambda c: c.data)
-async def process_callback(callback_query: types.CallbackQuery):
+async def process_callback(callback_query: types.CallbackQuery) -> Any:
     """
     This handler will be called when user sends `/start` or `/help` command
     """
     user_id = callback_query.from_user.id
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
-        info = Api(decrypted_token)
+        api_worker = Api(decrypted_token)
         if callback_query.data.startswith(CLOSE):
-            if info.close_issues_or_prs(callback_query.data[len(CLOSE):]):
+            if api_worker.close_issues_or_prs(callback_query.data[len(CLOSE):]):
                 return await bot.answer_callback_query(callback_query.id, 'Issue has been closed')
             else:
                 return await bot.answer_callback_query(callback_query.id, 'Error while closing')
         elif callback_query.data.startswith(MERGE):
-            if info.merge_prs(callback_query.data[len(MERGE):]):
+            if api_worker.merge_prs(callback_query.data[len(MERGE):]):
                 return await bot.answer_callback_query(callback_query.id, 'Pull request has been merged')
             else:
                 return await bot.answer_callback_query(callback_query.id, 'Error while merging')
@@ -153,7 +159,7 @@ async def process_callback(callback_query: types.CallbackQuery):
                                               'Write the title of pull request',
                                               'Enter valid name of repository', 'RepoName')
         else:
-            data = info.get_repo(callback_query.data)
+            data = api_worker.get_repo(callback_query.data)
             final_text, inline_keyboard = await get_full_repo(data)
             return await bot.send_message(callback_query.from_user.id, final_text, reply_markup=inline_keyboard,
                                           parse_mode='Markdown')
@@ -163,17 +169,18 @@ async def process_callback(callback_query: types.CallbackQuery):
 
 
 @dp.message_handler(commands=['start'])
-async def send_welcome(message: types.Message):
+async def send_start(message: types.Message) -> types.Message:
     """
-    This handler will be called when user sends `/start` or `/help` command
+    This handler will be called when user sends `/start` command
     """
-    return await message.reply("Hi!\nI'm EchoBot!\nPowered by _mezgoodle_.", parse_mode='Markdown')
+    text = "Hi!\nI'm EchoBot!\nPowered by _mezgoodle_."
+    return await message.reply(text, parse_mode='Markdown')
 
 
 @dp.message_handler(commands=['help'])
-async def send_help(message: types.Message):
+async def send_help(message: types.Message) -> types.Message:
     """
-    This handler will be called when user sends `/start` or `/help` command
+    This handler will be called when user sends `/help` command
     """
     text = 'Here you can see all instructions:\n' \
            '/token - set your <i>GitHub token</i>. Example: /token your_github_token\n' \
@@ -181,26 +188,26 @@ async def send_help(message: types.Message):
            '/prs - get information about user pull requests\n' \
            '/issues - get information about user issues\n' \
            '/repos - get information about user repositories\n' \
-           '/create_issues - start the process of creating an issue. Just answer the questions.\n' \
+           '/create_issue - start the process of creating an issue. Just answer the questions.\n' \
            '/create_pr - start the process of creating a pull request. Just answer the questions.\n' \
            'Also you can just type the name of repository and get information.'
     return await message.reply(text, parse_mode='Html')
 
 
 @dp.message_handler(commands=['token'])
-async def get_token(message: types.Message):
+async def get_token(message: types.Message) -> types.Message:
     """
-    This handler will be called when user sends `/start` or `/help` command
+    This handler will be called when user sends `/token`
     """
     try:
         token = message.text.split(' ')[1]
     except IndexError:
         return await message.reply('Enter the _token_', parse_mode='Markdown')
-    info = Api(token)
+    api_worker = Api(token)
     hasher = Hasher(os.getenv('KEY', b'Kt7ioOW4eugqDkfqcYiCz2mOuyiWRg_MTzckxEVp978='))
     user_id = message.from_user.id
     try:
-        info.get_user_info()
+        api_worker.get_user_info()
     except BadCredentialsException:
         return await message.reply('*Bad* credentials', parse_mode='Markdown')
     db = Client(DB_PASSWORD, 'githubhelper', 'tokens')
@@ -212,13 +219,13 @@ async def get_token(message: types.Message):
     else:
         db.insert({'token': encrypted_token, 'telegram_id': user_id})
         await message.reply('Your token has been _set_', parse_mode='Markdown')
-    return await message.answer(info.get_user_info(), parse_mode='Markdown')
+    return await message.answer(api_worker.get_user_info(), parse_mode='Markdown')
 
 
 @dp.message_handler(commands=['me'])
-async def get_me(message: types.Message):
+async def get_me(message: types.Message) -> types.Message:
     """
-    This handler will be called when user sends `/start` or `/help` command
+    This handler will be called when user sends `/me` command
     """
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
@@ -230,15 +237,15 @@ async def get_me(message: types.Message):
 
 
 @dp.message_handler(commands=['repos'])
-async def get_repos(message: types.Message):
+async def get_repos(message: types.Message) -> types.Message:
     """
-    This handler will be called when user sends `/start` or `/help` command
+    This handler will be called when user sends `/repos` command
     """
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
-        info = Api(decrypted_token)
-        repos = info.get_repos()
+        api_worker = Api(decrypted_token)
+        repos = api_worker.get_repos()
         text = ''
         index = 1
         inline_keyboard = types.InlineKeyboardMarkup(row_width=5)
@@ -259,9 +266,9 @@ async def get_repos(message: types.Message):
 
 
 @dp.message_handler(commands=['issues'])
-async def get_issues(message: types.Message):
+async def get_issues(message: types.Message) -> types.Message:
     """
-    This handler will be called when user sends `/start` or `/help` command
+    This handler will be called when user sends `/issues` command
     """
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
@@ -273,9 +280,9 @@ async def get_issues(message: types.Message):
 
 
 @dp.message_handler(commands=['prs'])
-async def get_prs(message: types.Message):
+async def get_prs(message: types.Message) -> types.Message:
     """
-    This handler will be called when user sends `/start` or `/help` command
+    This handler will be called when user sends `/prs` command
     """
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
@@ -287,9 +294,9 @@ async def get_prs(message: types.Message):
 
 
 @dp.message_handler(commands=['create_issue'], state=None)
-async def create_issue(message: types.Message):
+async def create_issue(message: types.Message) -> types.Message:
     """
-    This handler will be called when user sends `/start` or `/help` command
+    This handler will be called when user sends `/create_issue` command
     """
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
@@ -302,9 +309,9 @@ async def create_issue(message: types.Message):
 
 
 @dp.message_handler(commands=['create_pr'], state=None)
-async def create_pr(message: types.Message):
+async def create_pr(message: types.Message) -> types.Message:
     """
-    This handler will be called when user sends `/start` or `/help` command
+    This handler will be called when user sends `/create_pr` command
     """
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
@@ -316,33 +323,35 @@ async def create_pr(message: types.Message):
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
 
-# You can use state '*' if you need to handle all states
+# Use state '*' if I need to handle all states
 @dp.message_handler(state='*', commands='cancel')
 @dp.message_handler(Text(equals='cancel', ignore_case=True), state='*')
-async def cancel_handler(message: types.Message, state: FSMContext):
+async def cancel_handler(message: types.Message, state: FSMContext) -> types.Message:
     """
     Allow user to cancel any action
     """
     current_state = await state.get_state()
     if current_state is None:
-        return
+        return await message.reply('There aren\'t any processes.')
     await state.finish()
     return await message.reply('Cancelled.')
 
 
-async def handle_simple_state(message, state, state_class, key, answer_text):
+async def handle_simple_state(message: types.Message, state: FSMContext, state_class,
+                              key: str, answer_text: str) -> types.Message:
     answer = message.text
     await state.update_data({key: answer})
     await state_class.next()
     return await message.answer(answer_text)
 
 
-async def handle_complex_state(message, state, state_class, answer_text, error_text, key):
+async def handle_complex_state(message: types.Message, state: FSMContext, state_class,
+                               answer_text: str, error_text: str, key: str) -> types.Message:
     answer = message.text
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
-    info = Api(decrypted_token)
-    repo = info.get_repo(answer)
+    api_worker = Api(decrypted_token)
+    repo = api_worker.get_repo(answer)
     if repo:
         await state.update_data({key: answer})
         await state.update_data(Repository=repo)
@@ -353,48 +362,48 @@ async def handle_complex_state(message, state, state_class, answer_text, error_t
 
 
 @dp.message_handler(state=Issue.RepoName)
-async def answer_repo_name_issue(message: types.Message, state: FSMContext):
+async def answer_repo_name_issue(message: types.Message, state: FSMContext) -> types.Message:
     return await handle_complex_state(message, state, Issue, 'Write the title of issue',
                                       'Enter valid name of repository', 'RepoName')
 
 
 @dp.message_handler(state=PullRequest.RepoName)
-async def answer_repo_name_pr(message: types.Message, state: FSMContext):
+async def answer_repo_name_pr(message: types.Message, state: FSMContext) -> types.Message:
     return await handle_complex_state(message, state, PullRequest, 'Write the title of pull request',
                                       'Enter valid name of repository', 'RepoName')
 
 
 @dp.message_handler(state=Issue.Title)
-async def answer_title_issue(message: types.Message, state: FSMContext):
+async def answer_title_issue(message: types.Message, state: FSMContext) -> types.Message:
     return await handle_simple_state(message, state, Issue, 'Title', 'Write the body of issue')
 
 
 @dp.message_handler(state=PullRequest.Title)
-async def answer_title_pr(message: types.Message, state: FSMContext):
+async def answer_title_pr(message: types.Message, state: FSMContext) -> types.Message:
     return await handle_simple_state(message, state, PullRequest, 'Title', 'Write the body of pull request')
 
 
 @dp.message_handler(state=Issue.Body)
-async def answer_body_issue(message: types.Message, state: FSMContext):
+async def answer_body_issue(message: types.Message, state: FSMContext) -> types.Message:
     return await handle_simple_state(message, state, Issue, 'Body',
                                      'Write the nickname of user to assign this issue. If no-one - write empty')
 
 
 @dp.message_handler(state=PullRequest.Body)
-async def answer_body_pr(message: types.Message, state: FSMContext):
+async def answer_body_pr(message: types.Message, state: FSMContext) -> types.Message:
     return await handle_simple_state(message, state, PullRequest, 'Body',
                                      'Write the nickname of user to assign this pr. If no-one - write empty')
 
 
 @dp.message_handler(state=PullRequest.Assignee)
-async def answer_assign_pr(message: types.Message, state: FSMContext):
+async def answer_assign_pr(message: types.Message, state: FSMContext) -> types.Message:
     if message.text == 'empty':
         message.text = ''
     return await handle_simple_state(message, state, PullRequest, 'Assignee', 'Write the name of the base branch')
 
 
 @dp.message_handler(state=Issue.Assignee)
-async def answer_assign_issue(message: types.Message, state: FSMContext):
+async def answer_assign_issue(message: types.Message, state: FSMContext) -> types.Message:
     answer = message.text
     if answer == 'empty':
         await state.update_data(Assignee='')
@@ -403,8 +412,8 @@ async def answer_assign_issue(message: types.Message, state: FSMContext):
     data = await state.get_data()
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
-    info = Api(decrypted_token)
-    issue = info.create_issue(data)
+    api_worker = Api(decrypted_token)
+    issue = api_worker.create_issue(data)
     await state.finish()
     if issue:
         return await message.answer('Issue has been created')
@@ -413,7 +422,7 @@ async def answer_assign_issue(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=PullRequest.Base)
-async def answer_base_pr(message: types.Message, state: FSMContext):
+async def answer_base_pr(message: types.Message, state: FSMContext) -> types.Message:
     answer = message.text
     state_data = await state.get_data()
     if state_data.get('Repository').default_branch == answer:
@@ -425,7 +434,7 @@ async def answer_base_pr(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=PullRequest.Head)
-async def answer_head_pr(message: types.Message, state: FSMContext):
+async def answer_head_pr(message: types.Message, state: FSMContext) -> types.Message:
     answer = message.text
     state_data = await state.get_data()
     try:
@@ -438,7 +447,7 @@ async def answer_head_pr(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(state=PullRequest.Draft)
-async def answer_draft_pr(message: types.Message, state: FSMContext):
+async def answer_draft_pr(message: types.Message, state: FSMContext) -> types.Message:
     answer = message.text
     if answer.strip().lower() == 'true':
         await state.update_data(Draft=True)
@@ -447,8 +456,8 @@ async def answer_draft_pr(message: types.Message, state: FSMContext):
     data = await state.get_data()
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
-    info = Api(decrypted_token)
-    pr = info.create_pr(data)
+    api_worker = Api(decrypted_token)
+    pr = api_worker.create_pr(data)
     await state.finish()
     if pr:
         return await message.answer('Pull request has been created')
@@ -457,12 +466,12 @@ async def answer_draft_pr(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler()
-async def echo(message: types.Message):
+async def echo(message: types.Message) -> types.Message:
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
-        info = Api(decrypted_token)
-        data = info.get_repo(message.text)
+        api_worker = Api(decrypted_token)
+        data = api_worker.get_repo(message.text)
         if data:
             final_text, inline_keyboard = await get_full_repo(data)
             return await message.answer(final_text, reply_markup=inline_keyboard, parse_mode='Markdown')
