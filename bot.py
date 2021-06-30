@@ -394,7 +394,6 @@ async def answer_assign_pr(message: types.Message, state: FSMContext):
     return await handle_simple_state(message, state, PullRequest, 'Assignee', 'Write the name of the base branch')
 
 
-# TODO: if empty assign
 @dp.message_handler(state=Issue.Assignee)
 async def answer_assign_issue(message: types.Message, state: FSMContext):
     answer = message.text
