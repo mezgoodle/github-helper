@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from github import Github
 from github.GithubException import UnknownObjectException
 from github.Issue import Issue
@@ -10,6 +12,7 @@ class Api:
     """
     Class for manipulating with GitHub API
     """
+
     def __init__(self, token: str):
         """
         Create the authenticated user as object
@@ -19,13 +22,14 @@ class Api:
         self.user = self.g.get_user()
         self.url = 'https://api.github.com/repos/'
 
-    def get_user_info(self) -> str:
+    def get_user_info(self) -> Tuple[str, str]:
         """
         Method that returns string with information about user
-        :return: string with information
+        :return: avatar url and string with information
         """
-        return f'You have been authenticated with login *{self.user.login}* as *{self.user.name}*.\n' \
-               f'[Link]({self.user.html_url}) to the profile.'
+        return self.user.avatar_url, f'You have been authenticated with login *{self.user.login}* ' \
+                                     f'as *{self.user.name}*.\n' \
+                                     f'[Link]({self.user.html_url}) to the profile.'
 
     def get_repos(self) -> PaginatedList:
         """

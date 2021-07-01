@@ -1,8 +1,7 @@
-# TODO: look for api elements and add logic to the bot
 import logging
 import os
 from datetime import datetime
-from typing import Tuple, Any, Type
+from typing import Tuple, Any
 
 from github.Repository import Repository
 
@@ -243,7 +242,9 @@ async def get_me(message: types.Message) -> types.Message:
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
         api_worker = Api(decrypted_token)
-        return await message.answer(api_worker.get_user_info(), parse_mode='Markdown')
+        avatar_url, text = api_worker.get_user_info()
+        await message.answer(text, parse_mode='Markdown')
+        return await message.answer_photo(avatar_url)
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
