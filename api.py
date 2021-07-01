@@ -24,7 +24,8 @@ class Api:
         Method that returns string with information about user
         :return: string with information
         """
-        return f'You have been authenticated with login *{self.user.login}* as *{self.user.name}*'
+        return f'You have been authenticated with login *{self.user.login}* as *{self.user.name}*.\n' \
+               f'[Link]({self.user.html_url}) to the profile.'
 
     def get_repos(self) -> PaginatedList:
         """
