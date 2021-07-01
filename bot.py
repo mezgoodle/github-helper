@@ -117,8 +117,9 @@ async def prepare_issues_or_prs(token: str, option: bool) -> Tuple[str, types.In
     length_of_url = 29
     inline_keyboard = types.InlineKeyboardMarkup(row_width=4)
     for item in items:
-        final_text += f'*{index}* _{item.title}_ [#{item.number}]({item.html_url}). ' \
-                      f'[Link to repository]({item.repository.html_url}). Created: _{item.created_at}_. ' \
+        final_text += f'*{index}*. _{item.title}_ [#{item.number}]({item.html_url}), ' \
+                      f'[link to repository]({item.repository.html_url}).\n' \
+                      f'Created: _{await prepare_date(item.created_at)}_. ' \
                       f'Author: _{item.user.name}_\n'
         short_url = item.url[length_of_url:]
         button = types.InlineKeyboardButton(f'Close {index}', callback_data=f'c{short_url}')
