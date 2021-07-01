@@ -147,29 +147,29 @@ async def process_callback(callback_query: types.CallbackQuery) -> Any:
         api_worker = Api(decrypted_token)
         if callback_query.data.startswith(CLOSE):
             if api_worker.close_issues_or_prs(callback_query.data[len(CLOSE):]):
-                return await bot.answer_callback_query(callback_query.id, 'Issue has been closed')
+                return await bot.answer_callback_query(callback_query.id, 'Issue has been closed.')
             else:
-                return await bot.answer_callback_query(callback_query.id, 'Error while closing')
+                return await bot.answer_callback_query(callback_query.id, 'Error while closing.')
         elif callback_query.data.startswith(MERGE):
             if api_worker.merge_prs(callback_query.data[len(MERGE):]):
-                return await bot.answer_callback_query(callback_query.id, 'Pull request has been merged')
+                return await bot.answer_callback_query(callback_query.id, 'Pull request has been merged.')
             else:
-                return await bot.answer_callback_query(callback_query.id, 'Error while merging')
+                return await bot.answer_callback_query(callback_query.id, 'Error while merging.')
         elif callback_query.data.startswith(CREATE_ISSUE):
             await Issue.first()
             await bot.send_message(callback_query.from_user.id, 'So, the name of repository is:')
             message = await bot.send_message(callback_query.from_user.id, callback_query.data[1:])
             message.from_user.id = callback_query.from_user.id
-            return await handle_complex_state(message, dp.current_state(), Issue, 'Write the title of issue',
-                                              'Enter valid name of repository', 'RepoName')
+            return await handle_complex_state(message, dp.current_state(), Issue, 'Write the title of issue:',
+                                              'Enter valid name of repository.', 'RepoName')
         elif callback_query.data.startswith(CREATE_PR):
             await PullRequest.first()
             await bot.send_message(callback_query.from_user.id, 'So, the name of repository is:')
             message = await bot.send_message(callback_query.from_user.id, callback_query.data[1:])
             message.from_user.id = callback_query.from_user.id
             return await handle_complex_state(message, dp.current_state(), PullRequest,
-                                              'Write the title of pull request',
-                                              'Enter valid name of repository', 'RepoName')
+                                              'Write the title of pull request:',
+                                              'Enter valid name of repository.', 'RepoName')
         else:
             data = api_worker.get_repo(callback_query.data)
             final_text, inline_keyboard = await get_full_repo(data)
