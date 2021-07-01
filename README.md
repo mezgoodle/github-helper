@@ -352,7 +352,7 @@ python -m unittest -v
 
 ## Contribute :running:
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. Also look at the [CONTRIBUTING.md](https://github.com/mezgoodle/github-helper/blob/master/CONTRIBUTING.md).
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. Also look at the [CONTRIBUTING.md](https://github.com/mezgoodle/github-helper/blob/main/CONTRIBUTING.md).
 
 ## License :bookmark:
 
