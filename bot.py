@@ -1,6 +1,7 @@
 # TODO: look for api elements and add logic to the bot
 import logging
 import os
+from datetime import datetime
 from typing import Tuple, Any, Type
 
 from github.Repository import Repository
@@ -90,8 +91,14 @@ async def get_full_repo(repo: Repository) -> Tuple[str, types.InlineKeyboardMark
             button = types.InlineKeyboardButton(f'Pull request #{issue.number} - {issue.title}',
                                                 url=issue.html_url)
         inline_keyboard.add(button)
-    final_text = f'Name: *{repo.name}*\nLink: [click here]({repo.html_url})\n' \
-                 f'Stars: *{repo.stargazers_count}*\nTotal issues and prs: *{repo.get_issues().totalCount}*'
+    final_text = f'Name: *{repo.name}*, link: [click here]({repo.html_url})\n' \
+                 f'Total stars: _{repo.stargazers_count}_\n' \
+                 f'Total issues and prs: _{repo.get_issues().totalCount}_\n' \
+                 f'Total forks: _{repo.forks_count}_\n' \
+                 f'Main language: _{repo.language}_\n' \
+                 f'Created at: _{await prepare_date(repo.created_at)}_\n' \
+                 f'Updated at: _{await prepare_date(repo.updated_at)}_\n' \
+                 f'Type: _{"Private" if repo.private else "Public"}_\n'
     return final_text, inline_keyboard
 
 
@@ -122,6 +129,10 @@ async def prepare_issues_or_prs(token: str, option: bool) -> Tuple[str, types.In
         index += 1
     inline_keyboard.add(*buttons)
     return final_text, inline_keyboard
+
+
+async def prepare_date(date: datetime):
+    return date.strftime('%d/%m/%Y')
 
 
 @dp.callback_query_handler(lambda c: c.data)
@@ -230,8 +241,8 @@ async def get_me(message: types.Message) -> types.Message:
     user_id = message.from_user.id
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
-        info = Api(decrypted_token)
-        return await message.answer(info.get_user_info(), parse_mode='Markdown')
+        api_worker = Api(decrypted_token)
+        return await message.answer(api_worker.get_user_info(), parse_mode='Markdown')
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
@@ -252,8 +263,8 @@ async def get_repos(message: types.Message) -> types.Message:
         buttons = []
         for repo in repos:
             if not repo.archived:
-                text += f'{index}. {repo.name}. [Link]({repo.html_url}). ' \
-                        f'Total issues and prs: {repo.get_issues().totalCount}\n' \
+                text += f'*{index}. {repo.name}*, [link]({repo.html_url}).\n' \
+                        f'Total issues and prs: _{repo.get_issues().totalCount}_\n' \
                         f'Type: _{"Private" if repo.private else "Public"}_\n'
                 button = types.InlineKeyboardButton(str(index), callback_data=repo.name)
                 buttons.append(button)
