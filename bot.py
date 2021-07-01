@@ -185,8 +185,8 @@ async def send_start(message: types.Message) -> types.Message:
     """
     This handler will be called when user sends `/start` command
     """
-    text = "Hi!\nI'm EchoBot!\nPowered by _mezgoodle_."
-    return await message.reply(text, parse_mode='Markdown')
+    text = "Hi!\nI'm GitHub Helper!\nPowered by _mezgoodle_."
+    return await message.answer(text, parse_mode='Markdown')
 
 
 @dp.message_handler(commands=['help'])
@@ -221,7 +221,7 @@ async def get_token(message: types.Message) -> types.Message:
     try:
         api_worker.get_user_info()
     except BadCredentialsException:
-        return await message.reply('*Bad* credentials', parse_mode='Markdown')
+        return await message.reply('*Bad* credentials.', parse_mode='Markdown')
     db = Client(DB_PASSWORD, 'githubhelper', 'tokens')
     data = db.get({'telegram_id': user_id})
     encrypted_token = hasher.encrypt_message(token)
