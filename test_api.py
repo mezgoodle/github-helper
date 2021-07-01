@@ -14,7 +14,7 @@ class TestApi(TestCase):
     def test_get_user_info(self):
         output = self.api.get_user_info()
         self.assertIsNotNone(output)
-        self.assertIsInstance(output, str)
+        self.assertIsInstance(output, tuple)
 
     def test_get_repos(self):
         output = self.api.get_repos()
