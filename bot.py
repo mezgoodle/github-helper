@@ -314,7 +314,7 @@ async def create_issue(message: types.Message) -> types.Message:
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
         await Issue.first()
-        await message.reply('You started the process of creating the issue. Please, answer the questions')
+        await message.reply('You started the process of creating the issue. Please, answer the questions.')
         return await message.answer('What is a name of repository?')
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
@@ -329,7 +329,7 @@ async def create_pr(message: types.Message) -> types.Message:
     decrypted_token = await decrypt_token(user_id)
     if decrypted_token:
         await PullRequest.first()
-        await message.reply('You started the process of creating the pull request. Please, answer the questions')
+        await message.reply('You started the process of creating the pull request. Please, answer the questions.')
         return await message.answer('What is a name of repository?')
     else:
         return await message.answer('Your token isn\'t in database. Type the command /token')
@@ -375,43 +375,43 @@ async def handle_complex_state(message: types.Message, state: FSMContext, state_
 
 @dp.message_handler(state=Issue.RepoName)
 async def answer_repo_name_issue(message: types.Message, state: FSMContext) -> types.Message:
-    return await handle_complex_state(message, state, Issue, 'Write the title of issue',
-                                      'Enter valid name of repository', 'RepoName')
+    return await handle_complex_state(message, state, Issue, 'Write the title of issue:',
+                                      'Enter valid name of repository.', 'RepoName')
 
 
 @dp.message_handler(state=PullRequest.RepoName)
 async def answer_repo_name_pr(message: types.Message, state: FSMContext) -> types.Message:
-    return await handle_complex_state(message, state, PullRequest, 'Write the title of pull request',
-                                      'Enter valid name of repository', 'RepoName')
+    return await handle_complex_state(message, state, PullRequest, 'Write the title of pull request:',
+                                      'Enter valid name of repository.', 'RepoName')
 
 
 @dp.message_handler(state=Issue.Title)
 async def answer_title_issue(message: types.Message, state: FSMContext) -> types.Message:
-    return await handle_simple_state(message, state, Issue, 'Title', 'Write the body of issue')
+    return await handle_simple_state(message, state, Issue, 'Title', 'Write the body of issue:')
 
 
 @dp.message_handler(state=PullRequest.Title)
 async def answer_title_pr(message: types.Message, state: FSMContext) -> types.Message:
-    return await handle_simple_state(message, state, PullRequest, 'Title', 'Write the body of pull request')
+    return await handle_simple_state(message, state, PullRequest, 'Title', 'Write the body of pull request:')
 
 
 @dp.message_handler(state=Issue.Body)
 async def answer_body_issue(message: types.Message, state: FSMContext) -> types.Message:
     return await handle_simple_state(message, state, Issue, 'Body',
-                                     'Write the nickname of user to assign this issue. If no-one - write empty')
+                                     'Write the nickname of user to assign this issue. If no-one - write empty.')
 
 
 @dp.message_handler(state=PullRequest.Body)
 async def answer_body_pr(message: types.Message, state: FSMContext) -> types.Message:
     return await handle_simple_state(message, state, PullRequest, 'Body',
-                                     'Write the nickname of user to assign this pr. If no-one - write empty')
+                                     'Write the nickname of user to assign this pr. If no-one - write empty.')
 
 
 @dp.message_handler(state=PullRequest.Assignee)
 async def answer_assign_pr(message: types.Message, state: FSMContext) -> types.Message:
     if message.text == 'empty':
         message.text = ''
-    return await handle_simple_state(message, state, PullRequest, 'Assignee', 'Write the name of the base branch')
+    return await handle_simple_state(message, state, PullRequest, 'Assignee', 'Write the name of the base branch:')
 
 
 @dp.message_handler(state=Issue.Assignee)
@@ -428,9 +428,9 @@ async def answer_assign_issue(message: types.Message, state: FSMContext) -> type
     issue = api_worker.create_issue(data)
     await state.finish()
     if issue:
-        return await message.answer('Issue has been created')
+        return await message.answer('Issue has been created.')
     else:
-        return await message.answer('Error')
+        return await message.answer('Error.')
 
 
 @dp.message_handler(state=PullRequest.Base)
