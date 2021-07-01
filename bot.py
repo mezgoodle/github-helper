@@ -184,7 +184,7 @@ async def send_start(message: types.Message) -> types.Message:
     """
     This handler will be called when user sends `/start` command
     """
-    text = "Hi!\nI'm GitHub Helper!\nPowered by _mezgoodle_."
+    text = "Hi!\nI'm GitHub Helper!\nTo get more information type /help\nPowered by _mezgoodle_."
     return await message.answer(text, parse_mode='Markdown')
 
 
@@ -230,7 +230,9 @@ async def get_token(message: types.Message) -> types.Message:
     else:
         db.insert({'token': encrypted_token, 'telegram_id': user_id})
         await message.reply('Your token has been _set_', parse_mode='Markdown')
-    return await message.answer(api_worker.get_user_info(), parse_mode='Markdown')
+    avatar_url, text = api_worker.get_user_info()
+    await message.answer(text, parse_mode='Markdown')
+    return await message.answer_photo(avatar_url)
 
 
 @dp.message_handler(commands=['me'])
