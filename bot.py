@@ -70,7 +70,7 @@ async def decrypt_token(user_id: int) -> str:
         encrypted_token = data.get('token')
         decrypted_token = hasher.decrypt_message(encrypted_token)
         return decrypted_token
-    except TypeError:
+    except Exception:
         return ''
 
 
@@ -401,13 +401,13 @@ async def answer_title_pr(message: types.Message, state: FSMContext) -> types.Me
 @dp.message_handler(state=Issue.Body)
 async def answer_body_issue(message: types.Message, state: FSMContext) -> types.Message:
     return await handle_simple_state(message, state, Issue, 'Body',
-                                     'Write the nickname of user to assign this issue. If no-one - write empty.')
+                                     'Write the nickname of user to assign this issue. If no-one - write "empty".')
 
 
 @dp.message_handler(state=PullRequest.Body)
 async def answer_body_pr(message: types.Message, state: FSMContext) -> types.Message:
     return await handle_simple_state(message, state, PullRequest, 'Body',
-                                     'Write the nickname of user to assign this pr. If no-one - write empty.')
+                                     'Write the nickname of user to assign this pr. If no-one - write "empty".')
 
 
 @dp.message_handler(state=PullRequest.Assignee)
