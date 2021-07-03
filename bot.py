@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Tuple, Any
 
 from github.Repository import Repository
+from github.GithubException import BadCredentialsException, GithubException
 
 from api import Api
 from database import Client
@@ -16,7 +17,7 @@ from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from github.GithubException import BadCredentialsException, GithubException
+from aiogram.utils.executor import start_webhook
 
 # Constants
 CLOSE = 'c'
@@ -521,7 +522,7 @@ async def on_shutdown(dp):
 
 
 if __name__ == '__main__':
-    executor.start_webhook(
+    start_webhook(
         dispatcher=dp,
         webhook_path=WEBHOOK_PATH,
         on_startup=on_startup,
