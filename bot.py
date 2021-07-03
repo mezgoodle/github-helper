@@ -496,5 +496,35 @@ async def echo(message: types.Message) -> types.Message:
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
 
+# webhook settings
+HEROKU_APP_NAME = os.getenv('HEROKU_APP_NAME')
+WEBHOOK_HOST = f'https://{HEROKU_APP_NAME}.herokuapp.com'
+WEBHOOK_PATH = f'/webhook/{API_TOKEN}'
+WEBHOOK_URL = f'{WEBHOOK_HOST}{WEBHOOK_PATH}'
+
+# webserver settings
+WEBAPP_HOST = '0.0.0.0'
+WEBAPP_PORT = int(os.getenv('PORT'), 3001)
+
+
+async def on_startup(dp):
+    await bot.set_webhook(WEBHOOK_URL)
+
+
+async def on_shutdown(dp):
+    logging.warning('Shutting down..')
+    await bot.delete_webhook()
+    logging.warning('Bye!')
+
+
 if __name__ == '__main__':
+    executor.start_webhook(
+        dispatcher=dp,
+        webhook_path=WEBHOOK_PATH,
+        on_startup=on_startup,
+        on_shutdown=on_shutdown,
+        skip_updates=True,
+        host=WEBAPP_HOST,
+        port=WEBAPP_PORT
+    )
     executor.start_polling(dp, skip_updates=True)
