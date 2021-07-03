@@ -12,6 +12,7 @@ from config import API_TOKEN, DB_PASSWORD, HASH_KEY
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -55,6 +56,7 @@ logging.basicConfig(level=logging.INFO)
 # Init bot and dispatcher
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
+dp.middleware.setup(LoggingMiddleware())
 
 
 async def decrypt_token(user_id: int) -> str:
