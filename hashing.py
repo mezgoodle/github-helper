@@ -10,7 +10,7 @@ class Hasher:
         Create the hasher object with custom key
         :param key: value for hashing
         """
-        self.f = Fernet(bytes(key))
+        self.f = Fernet(str.encode(key))
 
     @staticmethod
     def generate_key(filepath='secret.key') -> None:
