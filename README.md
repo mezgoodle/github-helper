@@ -328,6 +328,7 @@ In _Linux/Mac OS_:
 export TELEGRAM_TOKEN=token
 export MONGO_PASSWORD=password
 export GITHUB_TOKEN=token
+export HASH_KEY=key
 ```
 
 or change values in [config.py](https://github.com/mezgoodle/github-helper/blob/main/config.py) file.
