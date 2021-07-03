@@ -8,7 +8,7 @@ from github.Repository import Repository
 from api import Api
 from database import Client
 from hashing import Hasher
-from config import API_TOKEN, DB_PASSWORD
+from config import API_TOKEN, DB_PASSWORD, HASH_KEY
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters.state import StatesGroup, State
@@ -65,7 +65,7 @@ async def decrypt_token(user_id: int) -> str:
     """
     db = Client(DB_PASSWORD, 'githubhelper', 'tokens')
     data = db.get({'telegram_id': user_id})
-    hasher = Hasher(os.getenv('KEY', b'Kt7ioOW4eugqDkfqcYiCz2mOuyiWRg_MTzckxEVp978='))
+    hasher = Hasher(HASH_KEY)
     try:
         encrypted_token = data.get('token')
         decrypted_token = hasher.decrypt_message(encrypted_token)
@@ -215,7 +215,7 @@ async def get_token(message: types.Message) -> types.Message:
     except IndexError:
         return await message.reply('Enter the _token_', parse_mode='Markdown')
     api_worker = Api(token)
-    hasher = Hasher(os.getenv('KEY', b'Kt7ioOW4eugqDkfqcYiCz2mOuyiWRg_MTzckxEVp978='))
+    hasher = Hasher(HASH_KEY)
     user_id = message.from_user.id
     try:
         api_worker.get_user_info()

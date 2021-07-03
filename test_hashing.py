@@ -2,11 +2,12 @@ import os
 from unittest import TestCase
 
 from hashing import Hasher
+from config import HASH_KEY
 
 
 class TestHasher(TestCase):
     def setUp(self):
-        self.hasher = Hasher(os.getenv('KEY', b'Kt7ioOW4eugqDkfqcYiCz2mOuyiWRg_MTzckxEVp978='))
+        self.hasher = Hasher(HASH_KEY)
         self.message = 'Test message'
 
     def test_generate_and_load_key(self):
