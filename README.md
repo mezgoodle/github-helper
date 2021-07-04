@@ -325,7 +325,7 @@ In _Windows_ just change by context menu
 In _Linux/Mac OS_:
 
 ```shell
-export TELEGRAM_TOKEN=token
+export API_TOKEN=token
 export MONGO_PASSWORD=password
 export GITHUB_TOKEN=token
 export HASH_KEY=key
