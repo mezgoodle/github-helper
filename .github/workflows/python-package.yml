@@ -39,3 +39,4 @@ jobs:
         MONGO_PASSWORD: ${{ secrets.MONGO_PASSWORD }}
         GITHUB_TOKEN: ${{ secrets.GB_TOKEN }}
         HASH_KEY: ${{ secrets.HASH_KEY }}
+        API_TOKEN: ${{ secrets.API_TOKEN }}
