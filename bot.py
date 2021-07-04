@@ -13,6 +13,7 @@ from config import API_TOKEN, DB_PASSWORD, HASH_KEY
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters.state import StatesGroup, State
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Text
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
@@ -55,6 +56,7 @@ logging.basicConfig(level=logging.INFO)
 # Init bot and dispatcher
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
+dp.middleware.setup(LoggingMiddleware())
 
 
 async def decrypt_token(user_id: int) -> str:
@@ -496,5 +498,34 @@ async def echo(message: types.Message) -> types.Message:
         return await message.answer('Your token isn\'t in database. Type the command /token')
 
 
+# Webhook settings
+HEROKU_APP_NAME = os.getenv('HEROKU_APP_NAME')
+WEBHOOK_HOST = f'https://{HEROKU_APP_NAME}.herokuapp.com'
+WEBHOOK_PATH = f'/webhook/{API_TOKEN}'
+WEBHOOK_URL = f'{WEBHOOK_HOST}{WEBHOOK_PATH}'
+
+# Webserver settings
+WEBAPP_HOST = '0.0.0.0'
+WEBAPP_PORT = int(os.getenv('PORT', 5000))
+
+
+# Functions for webhooks
+async def on_startup(dp):
+    await bot.set_webhook(WEBHOOK_URL)
+
+
+async def on_shutdown(dp):
+    logging.warning('Shutting down..')
+    logging.warning('Bye!')
+
+
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    start_webhook(
+        dispatcher=dp,
+        webhook_path=WEBHOOK_PATH,
+        on_startup=on_startup,
+        on_shutdown=on_shutdown,
+        skip_updates=True,
+        host=WEBAPP_HOST,
+        port=WEBAPP_PORT
+    )
