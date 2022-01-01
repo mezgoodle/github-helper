@@ -6,7 +6,7 @@ Babel==2.9.1
 certifi==2021.5.30
 cffi==1.14.5
 chardet==4.0.0
-cryptography==3.4.7
+cryptography==36.0.1
 Deprecated==1.2.12
 dnspython==1.16.0
 idna==2.10
