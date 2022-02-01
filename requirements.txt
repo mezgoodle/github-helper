@@ -8,7 +8,7 @@ cffi==1.14.5
 chardet==4.0.0
 cryptography==3.4.7
 Deprecated==1.2.12
-dnspython==1.16.0
+dnspython==2.2.0
 idna==2.10
 multidict==5.1.0
 pycparser==2.20
