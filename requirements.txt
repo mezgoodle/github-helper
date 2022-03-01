@@ -10,7 +10,7 @@ cryptography==3.4.7
 Deprecated==1.2.12
 dnspython==1.16.0
 idna==2.10
-multidict==5.1.0
+multidict==6.0.2
 pycparser==2.20
 PyGithub==1.55
 PyJWT==2.1.0
